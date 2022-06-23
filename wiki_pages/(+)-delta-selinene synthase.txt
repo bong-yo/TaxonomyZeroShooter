@@ -1,0 +1,11 @@
+(+)-delta-selinene synthase (EC 4.2.3.76) is an enzyme with systematic name (2E,6E)-farnesyl-diphosphate diphosphate-lyase ((+)-delta-selinene-forming). This enzyme catalyses the following chemical reaction
+
+(2E,6E)-farnesyl diphosphate 
+  
+    
+      
+        ⇌
+      
+    
+    {\displaystyle \rightleftharpoons }
+   (+)-delta-selinene + diphosphateInitial cyclization gives germacrene C in an enzyme bound form.

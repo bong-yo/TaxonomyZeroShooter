@@ -1,0 +1,2 @@
+WiFiDog is an open  source embeddable captive portal solution used to build wireless hotspots.
+WiFiDog consists of two components: the gateway and the authentication server. It was written by the technical team of Île Sans Fil and is included in the software package repository of OpenWrt.

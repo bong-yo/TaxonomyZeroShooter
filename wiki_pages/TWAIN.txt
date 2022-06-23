@@ -1,0 +1,7 @@
+TWAIN and TWAIN Direct are application programming interfaces (APIs) and communication protocols that regulate communication between software and digital imaging devices, such as image scanners and digital cameras. TWAIN is supported on Microsoft Windows, Linux and Mac OS X.The three key elements of TWAIN are:
+Application software. For example, graphics software, a fax application or a word processor.
+Source manager software. The source manager software is a software library provided by the TWAIN Working Group.
+Device drivers (referred to as "Source software" in the specification document)Both the application and the device driver must support TWAIN for the interface to be successfully used.
+The first release was in 1992,
+and it was last updated in 2021.
+It was designed with the help of a number of companies from the computer industry, to try to establish a unified standard connection interface between computers and imaging devices.

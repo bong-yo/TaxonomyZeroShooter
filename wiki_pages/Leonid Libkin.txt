@@ -1,0 +1,4 @@
+Leonid Libkin  is a computer scientist who works in data management, in particular in database theory, and in logic in computer science.
+Libkin is a professor at the University of Edinburgh, where he is chair of Foundations of Data Management in the School of Informatics, and at the École Normale Supérieure in Paris. He previously worked 
+at the University of Toronto, and at Bell Labs.Libkin is the author of standard textbooks on finite model theory and on data exchange.He is an ACM Fellow, 
+a Fellow of the Royal Society of Edinburgh, and a member of Academia Europaea. He won best paper awards at the Symposium on Principles of Database Systems (ACM PODS) in 1999, 2003, and 2005, at International Conference on Database Theory (ICDT) in 2011 and at the Principles of Knowledge Representation and Reasoning Conference in 2014 and 2018.

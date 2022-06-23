@@ -1,0 +1,1 @@
+Super PI is a computer program that calculates pi to a specified number of digits after the decimal point—up to a maximum of 32 million. It uses Gauss–Legendre algorithm and is a Windows port of the program used by Yasumasa Kanada in 1995 to compute pi to 232 digits.

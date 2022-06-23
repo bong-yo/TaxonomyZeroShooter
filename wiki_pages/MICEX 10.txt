@@ -1,0 +1,1 @@
+The MICEX 10 Index (Russian: Индекс ММВБ10) is an unweighted price index that tracks the ten most liquid Russian stocks listed on Moscow Exchange. Composition of the index is assessed quarterly following the liquidity criterion. Components are assigned equal weight.

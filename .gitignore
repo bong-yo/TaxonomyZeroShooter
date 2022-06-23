@@ -1,0 +1,24 @@
+# Node artifact files
+node_modules/
+dist/
+
+# Compiled Java class files
+*.class
+
+# Compiled Python bytecode
+*.py[cod]
+**/__pycache__/*
+
+# Log files
+*.Log
+
+# IDE  
+.vscode/*
+.venv/*
+
+# Files & folders
+prova.py
+results/*
+distrib_plots/*
+temp/*
+labels_sim_distribution.py

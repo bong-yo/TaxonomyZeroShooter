@@ -1,0 +1,6 @@
+sentence_transformers
+pandas
+tqdm
+flair
+numpy
+openpyxl

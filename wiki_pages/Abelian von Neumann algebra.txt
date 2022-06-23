@@ -1,0 +1,16 @@
+In functional analysis, an abelian von Neumann algebra is a von Neumann algebra of operators on a Hilbert space in which all elements commute. 
+The prototypical example  of an abelian von Neumann algebra is  the algebra L∞(X, μ) for μ a σ-finite measure on X realized as an algebra of operators on the Hilbert space L2(X, μ) as follows: Each f ∈ L∞(X, μ) is identified with the multiplication operator
+
+  
+    
+      
+        ψ
+        ↦
+        f
+        ψ
+        .
+      
+    
+    {\displaystyle \psi \mapsto f\psi .}
+  Of particular importance are the abelian von Neumann algebras on separable Hilbert spaces, particularly since they are completely classifiable by simple invariants.
+Though there is a theory for von Neumann algebras on non-separable Hilbert spaces (and indeed much of the general theory still holds in that case) the theory is considerably simpler for algebras on separable spaces and most applications to other areas of mathematics or physics only use separable Hilbert spaces.  Note that if the measure spaces (X, μ) is a standard measure space (that is X − N is a standard Borel space for some null set N and μ is a σ-finite measure) then L2(X, μ) is separable.

@@ -1,0 +1,12 @@
+In enzymology, a raffinose-raffinose alpha-galactosyltransferase (EC 2.4.1.166) is an enzyme that catalyzes the chemical reaction
+
+2 raffinose 
+  
+    
+      
+        ⇌
+      
+    
+    {\displaystyle \rightleftharpoons }
+   1F-alpha-D-galactosylraffinose + sucroseHence, this enzyme has one substrate, raffinose, and two products, 1F-alpha-D-galactosylraffinose and sucrose.
+This enzyme belongs to the family of glycosyltransferases, to be specific the hexosyltransferases.  The systematic name of this enzyme class is raffinose:raffinose alpha-D-galactosyltransferase. Other names in common use include raffinose (raffinose donor) galactosyltransferase, raffinose:raffinose alpha-galactosyltransferase, and raffinose-raffinose alpha-galactotransferase.

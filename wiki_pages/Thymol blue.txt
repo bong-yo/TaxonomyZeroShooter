@@ -1,0 +1,4 @@
+Thymol blue (thymolsulfonephthalein) is a brownish-green or reddish-brown crystalline powder that is used as a pH indicator. It is insoluble in water but soluble in alcohol and dilute alkali solutions.   
+
+It transitions from red to yellow at pH 1.2–2.8 and from yellow to blue at pH 8.0–9.6. It is usually a component of Universal indicator. 
+At wavelength (378 - 382) nm, extinction coefficient > 8000 and at wavelength (298 - 302) nm , the extinction coefficient > 12000.
