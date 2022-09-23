@@ -27,7 +27,7 @@ class PriorScoresZeroShooting:
 
     def compute_prior_scores(self, texts: List[str]) -> np.array:
         """Compute the matrix of similarity of each document to each label"""
-        logger.debug("Computing Z-STE")
+        logger.debug("Computing Z-STC")
         return self.zero_shooter.compute_labels_scores(texts, self.labels_flat)
 
     def build_prior_scores_trees(self, simil_matrix: np.array) -> Iterable[Dict]:
@@ -73,7 +73,7 @@ class PriorScoresZeroShooting:
 class PosteriorScoresPropagation:
     """
     Class to apply the overall process of taxonomy scoring
-    - compute PRIOR Z-STE scores
+    - compute PRIOR Z-STC scores
     - compute relevance thresholds alpha (one for each label)
     - get POSTERIOR scores by applying Upwards Score Propagation (USP)
     - select top scoring label for each level
@@ -85,14 +85,14 @@ class PosteriorScoresPropagation:
         self.encoder = encoder
 
     def compute_prior_trees(self) -> Iterable[Dict]:
-        """Use Zero-Shot Semantic Encoding (Z-STE) to assign a prior score for each
+        """Use Zero-Shot Semantic Text Classification (Z-STC) to assign a prior score for each
         label purely based on the semantics of tghe label and of the documents.
         
         Return
         ------
         prior_trees: Iterable[Dict]  -  An iterable of the taxonomy tree for each doc,
                                         where each label in the tree has associated the 
-                                        prior score computed with Z-STE.
+                                        prior score computed with Z-STC.
         """
         logger.info('Prior Scores')
         prior_scores = PriorScoresZeroShooting(
@@ -105,9 +105,9 @@ class PosteriorScoresPropagation:
     def compute_labels_alpha(self) -> Dict[str, float]:
         """Compute Relevance Threshold alpha for each label.
         For each label:
-        - Compute distribution of Z-STE scores on 1000 ground Wikipedia articles 
+        - Compute distribution of Z-STC scores on 1000 ground Wikipedia articles 
             (randomly selected therefore unrelated to the label)
-        - Gumbel distribution mean and sigma are fitted on Z-STE scores
+        - Gumbel distribution mean and sigma are fitted on Z-STC scores
         - Compute alpha(label) = mean(label) + 3 sigma(label)
 
         Return
