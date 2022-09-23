@@ -12,7 +12,7 @@ import src
 from src.metrics import PerformanceDisplay
 from src.dataset import WebOfScience, DBPedia, AmazonHTC
 from src.scoring_functions import PriorScoresZeroShooting
-from src.encoders import ZeroShooterZSTE
+from src.encoders import ZeroShooterZSTC
 from src.utils import FileIO
 from globals import Globals, Paths
 
@@ -68,7 +68,7 @@ if __name__ == '__main__':
             FileIO.append_text("\n" + msg, savefile)
 
             # Encode docs and labels & compute ZSTE scores.
-            zste_model = ZeroShooterZSTE(model_name)
+            zste_model = ZeroShooterZSTC(model_name)
             scores_zs = PriorScoresZeroShooting(zste_model, data_test.tax_tree, data_test.labels_flat)
 
             # Measure performance of given model on given dataset.

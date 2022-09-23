@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import gumbel_r, norm, expon, halfnorm
 from src.utils import FileIO
-from src.encoders import ZeroShooterZSTE
+from src.encoders import ZeroShooterZSTC
 from globals import Paths
 
 
@@ -58,7 +58,7 @@ class DistributionEstimator:
 
 
 class VarianceEstimator:
-    def __init__(self, docs_folder: str, encoder: ZeroShooterZSTE) -> None:
+    def __init__(self, docs_folder: str, encoder: ZeroShooterZSTC) -> None:
         independent_documents = docs_folder
         self.texts = [
             FileIO.read_text(filename) 

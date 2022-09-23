@@ -1,7 +1,7 @@
 import logging
 import argparse
 from src.utils import FileIO
-from src.encoders import ZeroShooterZSTE
+from src.encoders import ZeroShooterZSTC
 from src.dataset import WebOfScience, AmazonHTC, DBPedia
 from src.scoring_functions import PosteriorScoresPropagation
 from src.metrics import PerformanceDisplay
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     savefile = f'{Paths.RESULTS_DIR}/{args.savefile}'
     DATASETS = {'WebOfScience': WebOfScience, 'DBPedia': DBPedia, 'AmazonHTC': AmazonHTC}
     MODEL_NAME = 'all-mpnet-base-v2'
-    encoder = ZeroShooterZSTE(MODEL_NAME)
+    encoder = ZeroShooterZSTC(MODEL_NAME)
 
     for name, DataSet in DATASETS.items():
         msg = f"\n\n---------------------  {name} - {MODEL_NAME} --------------------\n"
