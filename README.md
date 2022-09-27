@@ -1,5 +1,6 @@
 # Zero-Shot Taxonomy Mapping for Document Classification
 Classification of text according to a custom (hierarchical) taxonomy of categories. Does not need any labelled data or any fine-tuning of the model.
+![](images/overview.png)
 
 
 ## Info
@@ -7,8 +8,44 @@ Classification of text according to a custom (hierarchical) taxonomy of categori
 * App version: 1.3.0-beta
 * Install modules: ```pip install -r requirements.txt``` 
 
+## Usage
+To map a set of `texts` according to a custom `taxonomy` call
+```python
+from classifier import ZeroShootTaxonomyMapper
+top_scores, usp_scores = ZeroShootTaxonomyMapper.run(taxonomy, texts)
+results = list(zip(texts, usp_scores, top_scores))
+```
+For each input text, `results` contains:
+ * text
+ * custom `taxonomy` tree with posterior USP scores for each label
+ * top label for each layer of the taxonomy
 
-## Summary
+The custom `taxonomy` should be formatted in the follwoing structure:
+```json
+{
+    "category 0": {
+        "subcategory 00": {...},
+        "subcategory 01": {...},
+        ...:{...}
+    },
+    "category 1": {
+        "subcategory 10": {...},
+        "subcategory 11": {...},
+        ...: {...}
+    },
+    ...: {...}
+}
+```
+The input `texts` can be a simple list of strings:
+```json
+[
+    "text 0",
+    "text 1",
+    ...
+]
+```
+
+## Paper Summary
 Classification of documents according to a custom internal *hierarchical taxonomy* is a common problem for many organizations that deal with textual data. Approaches aimed to address this challenge are, for the vast majority, supervised methods, which have the advantage of producing good results on specific datasets, but the major drawbacks of requiring an entire corpus of annotated documents, and the resulting models are not directly applicable to a different taxonomy.
 In this paper, we aim to contribute to this important issue, by proposing a method to classify text according to a hierarchical taxonomy *entirely without the need of labelled data*. The idea is to first leverage the semantic information encoded into pre-trained Deep Language Models to zero-shot a prior confidence score for each label of the taxonomy, and secondly take advantage of the hierarchical structure to reinforce this prior belief.
 Experiments are conducted on three hierarchically annotated datasets: WebOfScience, DBpedia Extracts and Amazon Product Reviews, which are very diverse in the type of language adopted and have taxonomy depth of two and three levels. On those datasets, we first compare different zero-shot methods, and then we show that our approach improves the results everywhere.
@@ -23,12 +60,20 @@ Our method combine several elements to be able to both understand how the docume
 
 To validate our approach we first verify that the Z-STC step is solid, by considering multiple Semantic Text Embedding models on the task of raw (not hierarchical) Zero-Shot Text Classification and by comparing our Z-STC approach with other two state of the art Zero-Shot approaches. After that, we 1) choose the best performing model for Z-STC, 2) run the Relevance Threshold algorithm to statistically determine which value of similarity indicates high relevance of each label to documents and, 3) apply the Upwards Score Propagation mechanism to bring everything together and include the taxonomy structure information into the classification task. We compare the results obtained like this with the ones obtained by simply performing raw Z-STC using the 'flatten' taxonomy, i.e., without USP mechanism, and we show that the results are greatly improved on all the layers affected of all the datasets considered.
 
+## Semantic Text Embedding (STE) Models
+We pick five top STE performing models for comparison, to cover, at least in part, the variability of STE tasks and Deep Language Model training paradigms:
+* [**paraphrase-mpnet-base-v2**](https://huggingface.co/sentence-transformers/paraphrase-mpnet-base-v2): [MPNet](https://arxiv.org/abs/2004.09297) is a model pre-trained using a Masked and Permuted Language Modelling. This particular MPNet model has been fine-tuned for Semantic Text Embedding (STE) to be able to detect if a sentence is paraphrasing another.
+* [**multi-qa-mpnet-base-cos-v1**](https://huggingface.co/sentence-transformers/multi-qa-mpnet-base-cos-v1): MPNet based model specialised on Semantic Search and Question Answering. It has been tuned on multiple datasets.
+* [**msmarco-bert-base-dot-v5**](https://huggingface.co/sentence-transformers/msmarco-bert-base-d) BERT based model, also specialised on Question Answering and trained on the [MSMARCO](https://arxiv.org/abs/1611.09268) dataset.
+* [**all-mpnet-base-v2**](https://huggingface.co/sentence-transformers/all-mpnet-base-v2): all-round MPNet based model, fine-tuned for many use-cases over a large and diverse STE dataset of over 1 billion examples.
+* [**all-roberta-large-v1**](https://huggingface.co/sentence-transformers/all-roberta-large-v1): BERT-based model, is trained with the same general STE intent as the previous *all-mpnet-base-v2* model, and on the same dataset.
+
 ## Results
 The two main results are:
-1. Showing that our simple Z-STC method for flat (i.e. not hierarchical) text classification is superior when it comes to performance and time complexity with respect to other state-of-the-art approaches to zero shot text classification.
-2. Showing that our novel Upwards Score Propagation mechanism, that computes Relevance Thresholds and propagate relevance scores upwards to the structure of the Taxonomy, greately improves results everywhere compared to perform starightforward zero-shot text classification on flatten Taxonomy.
-![](results_F1.png)
-![](results_scaling.png)
+1. Showing that our simple *Z-STC *method for flat (i.e. not hierarchical) text classification is superior when it comes to performance and time complexity with respect to other state-of-the-art approaches to zero shot text classification.
+2. Showing that our novel *Upwards Score Propagation* mechanism, that computes Relevance Thresholds and propagate relevance scores upwards to the structure of the Taxonomy, greately improves results everywhere compared to perform starightforward zero-shot text classification on flatten Taxonomy.
+![](images/results_F1.png)
+![](images/results_scaling.png)
 
 
 

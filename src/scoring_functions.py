@@ -5,7 +5,7 @@ import numpy as np
 from copy import deepcopy
 from collections import deque
 from src.hyper_inference import VarianceEstimator
-from src.encoders import ZeroShooterZSTE, ZeroshooterBART_2, ZeroshooterTARS
+from src.encoders import ZeroShooterZSTC, ZeroshooterBART_2, ZeroshooterTARS
 from src.dataset import WebOfScience, AmazonHTC, DBPedia
 from src.score_propagation import UpwardScorePropagation
 from globals import Paths
@@ -17,7 +17,7 @@ class PriorScoresZeroShooting:
     """Use a Text Encoder to ZeroShoot all labels prior probabilities on each document.
     At this point, prior probs. are purely based on labels and docs semantics"""
     def __init__(self,
-                 zero_shooter: Union[ZeroShooterZSTE, ZeroshooterBART_2, ZeroshooterTARS],
+                 zero_shooter: Union[ZeroShooterZSTC, ZeroshooterBART_2, ZeroshooterTARS],
                  tax_tree: Dict,
                  labels_flat: List[str]) -> None:
         self.zero_shooter = zero_shooter
@@ -27,7 +27,7 @@ class PriorScoresZeroShooting:
 
     def compute_prior_scores(self, texts: List[str]) -> np.array:
         """Compute the matrix of similarity of each document to each label"""
-        logger.debug("Computing Z-STC")
+        logger.debug("computing Z-STC")
         return self.zero_shooter.compute_labels_scores(texts, self.labels_flat)
 
     def build_prior_scores_trees(self, simil_matrix: np.array) -> Iterable[Dict]:
@@ -80,7 +80,7 @@ class PosteriorScoresPropagation:
     """
     def __init__(self, 
                  data: Union[WebOfScience, AmazonHTC, DBPedia],
-                 encoder: ZeroShooterZSTE) -> None:
+                 encoder: ZeroShooterZSTC) -> None:
         self.data = data
         self.encoder = encoder
 
@@ -94,7 +94,7 @@ class PosteriorScoresPropagation:
                                         where each label in the tree has associated the 
                                         prior score computed with Z-STC.
         """
-        logger.info('Prior Scores')
+        logger.info('computing Prior Relevance Scores')
         prior_scores = PriorScoresZeroShooting(
             self.encoder, self.data.tax_tree, self.data.labels_flat
         )
@@ -114,7 +114,7 @@ class PosteriorScoresPropagation:
         ------
         label2alpha: Dict[str, float]  -  Dictionary of label: alpha(label)
         """
-        logger.info('Computing alphas')
+        logger.info('computing Relevance Thresholds alphas')
         variance_estimator = VarianceEstimator(glob(f'{Paths.WIKI_DIR}/*'), self.encoder)
         label2mean, label2sigma = variance_estimator.estimate_gumbel(self.data.labels_flat)
         label2alpha = {l: mean + 3 * label2sigma[l] for l, mean in label2mean.items()}  # alpha(label) = mean(label) + 3 sigma(label).
@@ -124,7 +124,7 @@ class PosteriorScoresPropagation:
         """
         Compute posterior scores trees by apply Upwards Score Propagation (USP).
         """
-        logger.info('USP')
+        logger.info('applying USP')
         ups = UpwardScorePropagation(label2alpha)
         # For each document prior-tree apply USP to get posterior scores.
         for prior_tree in prior_trees:

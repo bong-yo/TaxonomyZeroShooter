@@ -51,13 +51,12 @@ def arguments():
 
 class Paths:
     MAIN_DIR = dirname(abspath(__file__))
-    DataPropmotion_DIR = dirname(MAIN_DIR)
     SRC_DIR = f"{MAIN_DIR}/src"
     RESULTS_DIR = f"{MAIN_DIR}/results"
     MODEL_SAVES = f"{MAIN_DIR}/model_saves"
-    WOS_DIR = f'{DataPropmotion_DIR}/datasets/WebOfScience/Meta-data'
-    DBP_DIR = f'{DataPropmotion_DIR}/datasets/DBPedia_Classes'
-    AHTC_DIR = f'{DataPropmotion_DIR}/datasets/Hierarchical_Text_Classification'
+    WOS_DIR = f'{MAIN_DIR}/datasets/WebOfScience/Meta-data'
+    DBP_DIR = f'{MAIN_DIR}/datasets/DBPedia_Extract'
+    AHTC_DIR = f'{MAIN_DIR}/datasets/Amazon_Reviews'
     WIKI_DIR = f'{MAIN_DIR}/wiki_pages'
 
 class Globals:

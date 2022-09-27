@@ -12,7 +12,7 @@ import src
 from src.metrics import PerformanceDisplay
 from src.dataset import WebOfScience, DBPedia, AmazonHTC
 from src.scoring_functions import PriorScoresZeroShooting
-from src.encoders import ZeroShooterZSTC
+from src.encoders import ZeroShooterZSTC, ZeroshooterBART_2, ZeroshooterTARS
 from src.utils import FileIO
 from globals import Globals, Paths
 
@@ -49,7 +49,9 @@ if __name__ == '__main__':
         'all-roberta-large-v1',
         'paraphrase-mpnet-base-v2',
         'multi-qa-mpnet-base-cos-v1',
-        'msmarco-bert-base-dot-v5'
+        'msmarco-bert-base-dot-v5',
+        'TARS',
+        'BART'
     ]
 
     # Loop through all benchmarking datasets.
@@ -68,7 +70,12 @@ if __name__ == '__main__':
             FileIO.append_text("\n" + msg, savefile)
 
             # Encode docs and labels & compute ZSTE scores.
-            zste_model = ZeroShooterZSTC(model_name)
+            if model_name == 'TARS':
+                zste_model = ZeroshooterTARS(batch_size=32)
+            elif model_name == 'BART':
+                zste_model = ZeroshooterBART_2(batch_size=20)
+            else:
+                zste_model = ZeroShooterZSTC(batch_size=64, model_name=model_name)
             scores_zs = PriorScoresZeroShooting(zste_model, data_test.tax_tree, data_test.labels_flat)
 
             # Measure performance of given model on given dataset.

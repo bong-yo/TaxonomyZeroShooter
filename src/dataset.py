@@ -1,7 +1,7 @@
 import logging
 import json
 import re
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 from copy import copy
 from tqdm import tqdm
 import pandas as pd
@@ -20,7 +20,7 @@ class TaxonomyBase:
         # represent its semantic.
         self.label2rename = label2rename
 
-    def load_taxonomy_tree(self, filename: str) -> List[str]:
+    def load_from_file(self, filename: str) -> List[str]:
         return FileIO.read_json(filename)
     
     def get_taxonomy_levels(self, tree: Dict) -> Tuple[List[List[str]], List[str]]:
@@ -70,7 +70,44 @@ class TaxonomyBase:
         return labels_levels
 
 
-class WebOfScience(TaxonomyBase):
+class BaseData(TaxonomyBase):
+    """
+    Base class to handle the common format the data should have to be fed to the 
+    ML algos
+
+    Parameters
+    ----------
+    taxonomy: Union[Dict, str] - can be two things: 1) the Taxonomy tree itself, in the form of dict of dicts   2) path to the json where the taxonomy tree is stored
+    documents: Union[str, List[str]] - text or list of texts to be classified
+    labels_remapping: Dict[str, str] - a dictionary in case one wants to change name
+                                       to the taxonomy labels.
+
+    Returns
+    -------
+    labels_levels: List[List[str]] - List of lists of labels at each level.
+    labels_flat:   List[str] - Flat list of all labels (ignoring tree structure).
+    """
+    def __init__(self,
+        taxonomy: Union[Dict, str],
+        documents: Union[str, List[str]],
+        labels_remapping: Dict[str, str] = {}) -> None:
+        super(BaseData, self).__init__(labels_remapping)
+        if isinstance(documents, str):
+            documents = [documents]
+        self.abstracts: List[str] = documents
+        self.tax_tree: Dict = self.load_taxonomy_tree(taxonomy)
+        self.labels_levels, self.labels_flat = self.get_taxonomy_levels(self.tax_tree)
+    
+    def load_taxonomy_tree(self, tree: Union[Dict, str]):
+        if isinstance(tree, str):
+            return self.load_from_file(tree)
+        elif isinstance(tree, dict):
+            return tree
+
+
+
+
+class WebOfScience(BaseData):
     def __init__(self, datasplit: str, topn: int = None) -> None:
         remap_level1 = {
             'CS': 'Computer Science',
@@ -104,7 +141,7 @@ class WebOfScience(TaxonomyBase):
         ]
 
 
-class DBPedia(TaxonomyBase):
+class DBPedia(BaseData):
     def __init__(self, datasplit: str, topn: int = None, build_tree: bool = False) -> None:
         logger.debug('Loading DBPedia data')
         super(DBPedia, self).__init__()
@@ -150,7 +187,7 @@ class DBPedia(TaxonomyBase):
         return ' '.join(re.findall('[A-Z][^A-Z]*', x))
 
 
-class AmazonHTC(TaxonomyBase):
+class AmazonHTC(BaseData):
     def __init__(self, datasplit: str, topn: int = None, build_tree: bool = False) -> None:
         logger.debug('Loading AmazonHTC data')
         super(AmazonHTC, self).__init__()

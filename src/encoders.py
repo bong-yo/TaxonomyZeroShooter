@@ -30,11 +30,11 @@ class ZeroShooter:
         pass
 
 
-class ZeroShooterZSTE():
+class ZeroShooterZSTC():
     '''Class of text encoders that encode according to Z-STE
     (i.e. documents and labels separately)'''
     def __init__(self, model_name: str='all-mpnet-base-v2') -> None:
-        super(ZeroShooterZSTE, self).__init__()
+        super(ZeroShooterZSTC, self).__init__()
         self.encoder = SentenceTransformer(model_name).to(Globals.DEVICE)
 
     def encode_labels(self, labels: List[str]) -> np.array:
