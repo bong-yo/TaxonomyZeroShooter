@@ -59,10 +59,10 @@ class ZeroShooterZSTC():
             logger.error(f"Unsupported encoding method: {encoding_method}")
         return cos_sim(docs_embs, self.labels_embs).numpy() # Matrix N x M, N docs and M labels.
 
-    def encode_base(self, docs: List[str]):
+    def encode_base(self, docs: List[str], show_progress_bar: bool=False):
         """Naively encode the whole document."""
         with torch.no_grad():
-            return self.encoder.encode(docs, show_progress_bar=False)
+            return self.encoder.encode(docs, show_progress_bar=show_progress_bar)
     
     def encode_ess(self, 
                    docs: List[str],

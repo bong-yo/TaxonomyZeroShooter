@@ -59,10 +59,10 @@ class DistributionEstimator:
 
 class VarianceEstimator:
     def __init__(self, docs_folder: str, encoder: ZeroShooterZSTC) -> None:
-        independent_documents = docs_folder
+        base_wiki_documents = docs_folder  # Set of randomly scraped Wikipedia articles.
         self.texts = [
             FileIO.read_text(filename) 
-            for filename in independent_documents
+            for filename in base_wiki_documents
         ]
         self.encoder = encoder
     
@@ -89,6 +89,7 @@ class VarianceEstimator:
         return label2mean, label2sigma
 
     def estimate_naive(self, labels: List[str]) -> Dict[str, float]:
+        '''Compute mean and variance naively as: mean = sum(x) and sigma = sum (x-mean)^2'''
         docs_labels_scores = self.encoder.compute_labels_scores(
             self.texts, labels, encoding_method='base'
         )

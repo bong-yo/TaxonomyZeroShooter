@@ -70,7 +70,7 @@ We pick five top STE performing models for comparison, to cover, at least in par
 
 ## Results
 The two main results are:
-1. Showing that our simple *Z-STC *method for flat (i.e. not hierarchical) text classification is superior when it comes to performance and time complexity with respect to other state-of-the-art approaches to zero shot text classification.
+1. Showing that our simple *Z-STC* method for flat (i.e. not hierarchical) text classification is superior when it comes to performance and time complexity with respect to other state-of-the-art approaches to zero shot text classification.
 2. Showing that our novel *Upwards Score Propagation* mechanism, that computes Relevance Thresholds and propagate relevance scores upwards to the structure of the Taxonomy, greately improves results everywhere compared to perform starightforward zero-shot text classification on flatten Taxonomy.
 ![](images/results_F1.png)
 ![](images/results_scaling.png)

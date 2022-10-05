@@ -21,4 +21,5 @@ prova.py
 results/*
 distrib_plots/*
 temp/*
+saves/*
 labels_sim_distribution.py
