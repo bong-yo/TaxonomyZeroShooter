@@ -19,7 +19,7 @@ dist/
 # Files & folders
 prova.py
 results/*
-distrib_plots/*
+Ground_PDFs_plots/*
 temp/*
 saves/*
 labels_sim_distribution.py

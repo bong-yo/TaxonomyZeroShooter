@@ -118,7 +118,7 @@ class WebOfScience(BaseData):
             'Medical': 'Medical Science',
             'biochemistry': 'Biochemistry'
         }
-        super(WebOfScience, self).__init__(remap_level1)
+        super(WebOfScience, self).__init__({}, [], remap_level1)
         logger.debug('Loading WebOfScience data')
 
         # Get taxonomy.
@@ -144,7 +144,7 @@ class WebOfScience(BaseData):
 class DBPedia(BaseData):
     def __init__(self, datasplit: str, topn: int = None, build_tree: bool = False) -> None:
         logger.debug('Loading DBPedia data')
-        super(DBPedia, self).__init__()
+        super(DBPedia, self).__init__({}, [])
         self.train_file = f'{Paths.DBP_DIR}/DBPEDIA_train.csv'
         self.valid_file = f'{Paths.DBP_DIR}/DBPEDIA_val.csv'
         self.test_file = f'{Paths.DBP_DIR}/DBPEDIA_test.csv'
@@ -190,7 +190,7 @@ class DBPedia(BaseData):
 class AmazonHTC(BaseData):
     def __init__(self, datasplit: str, topn: int = None, build_tree: bool = False) -> None:
         logger.debug('Loading AmazonHTC data')
-        super(AmazonHTC, self).__init__()
+        super(AmazonHTC, self).__init__({}, [])
         self.train_file = f'{Paths.AHTC_DIR}/train_40k.csv'
         self.test_file = f'{Paths.AHTC_DIR}/train_40k.csv'
         self.valid_file = f'{Paths.AHTC_DIR}/val_10k.csv'

@@ -54,9 +54,10 @@ class Paths:
     SRC_DIR = f"{MAIN_DIR}/src"
     RESULTS_DIR = f"{MAIN_DIR}/results"
     MODEL_SAVES = f"{MAIN_DIR}/model_saves"
-    WOS_DIR = f'{MAIN_DIR}/datasets/WebOfScience/Meta-data'
-    DBP_DIR = f'{MAIN_DIR}/datasets/DBPedia_Extract'
-    AHTC_DIR = f'{MAIN_DIR}/datasets/Amazon_Reviews'
+    DATASETS_DIR = f"{dirname(MAIN_DIR)}/datasets"
+    WOS_DIR = f'{DATASETS_DIR}/WebOfScience/Meta-data'
+    DBP_DIR = f'{DATASETS_DIR}/DBPedia_Extract'
+    AHTC_DIR = f'{DATASETS_DIR}/Amazon_Reviews'
     WIKI_DIR = f'{MAIN_DIR}/wiki_pages'
 
 class Globals:

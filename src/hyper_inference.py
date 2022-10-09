@@ -6,7 +6,7 @@ from typing import List, Tuple, Dict
 from glob import glob
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.stats import gumbel_r, norm, expon, halfnorm
+from scipy.stats import gumbel_r, norm, expon, halfnorm, lognorm
 from src.utils import FileIO
 from src.encoders import ZeroShooterZSTC
 from globals import Paths
@@ -38,6 +38,12 @@ class DistributionEstimator:
         return mean, sigma, mu, beta, pdf
 
     @classmethod
+    def fit_lognorm(cls, similarities: np.array) -> Tuple:
+        pars = lognorm.fit(similarities)  # pars = s, loc, scale.
+        pdf = lognorm.pdf(cls.X, *pars)
+        return pdf, pars
+
+    @classmethod
     def fit_exp(cls, similarities: np.array) -> Tuple:
         loc, scale = expon.fit(similarities)
         pdf = expon.pdf(cls.X, loc, scale)
@@ -51,7 +57,7 @@ class DistributionEstimator:
     
     @classmethod
     def plot(cls, y: np.array, pdf, pdf_label: str, plot_name: str) -> None:
-        plt.hist(y, bins=200, range=cls.RANGE, label='Z-STE Ground PDF', density=True)
+        plt.hist(y, bins=200, range=cls.RANGE, label='Z-STC Ground PDF', density=True)
         plt.plot(cls.X, pdf, label=pdf_label)
         plt.legend(loc='upper right')
         plt.savefig(plot_name)
@@ -87,6 +93,34 @@ class VarianceEstimator:
             label2mean[label] = mean
             label2sigma[label] = sigma
         return label2mean, label2sigma
+
+    def estimate_lognormal(self, labels: List[str], thresh_perc: float) -> Dict[str, float]:
+        """Estimate LogNormal mean and sigma on the ground Wikipedia articles
+        for each label in the taxonomy
+        
+        Returns
+        -------
+        label2mean: Dict[str, float] - For each label, mean of Gumble ditribution fit 
+                                        on similarity scores of label with every document 
+                                        of the ground wikipedia article.
+        label2sigma: Dict[str, float] - For each label, sigma of Gumble ditribution.
+        """
+        scores = self.encoder.compute_labels_scores(
+            self.texts, labels, encoding_method='base'
+        )
+        label2thresh = {}
+        for i, label in enumerate(labels):
+            label_scores = scores[:, i]  # Scores of the label in all documents.
+            _, pars = DistributionEstimator.fit_lognorm(label_scores)
+            # Find the value of x_thresh such that the cumulative distr func is = thresh.
+            rv = lognorm(*pars)
+            start = min(label_scores)
+            stop = max(label_scores)
+            for x_thresh in np.arange(start, stop, 0.001):
+                if rv.cdf(x_thresh) > thresh_perc:
+                    break
+            label2thresh[label] = x_thresh
+        return label2thresh
 
     def estimate_naive(self, labels: List[str]) -> Dict[str, float]:
         '''Compute mean and variance naively as: mean = sum(x) and sigma = sum (x-mean)^2'''

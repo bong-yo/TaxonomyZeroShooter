@@ -39,7 +39,7 @@ if __name__ == "__main__":
         data = DataSet('test', topn=None)
         scorer = PosteriorScoresPropagation(data, encoder)
 
-        # Compute Z-STE prior scores and propagate with USP.
+        # Compute Z-STC prior scores and propagate with USP.
         prior_scores_trees = scorer.compute_prior_trees()
         label2alpha = scorer.compute_labels_alpha()
         posterior_scores_trees = scorer.apply_USP(prior_scores_trees, label2alpha)
@@ -53,4 +53,4 @@ if __name__ == "__main__":
         performance = perf_displayer.compute_levels_performance()
         msg += performance
         print(msg)
-        FileIO.append_text(msg, savefile)
+        # FileIO.append_text(msg, savefile)

@@ -1,5 +1,5 @@
 """
-This script runs Z-STE (Zero-Shot Semantic Text Embedding).
+This script runs Z-STC (Zero-Shot Semantic Text Classification).
 Each label is assigned a score purely based on semantics, i.e. both labels and docs
 are encoded with several text encoders, and a similarity score is assigned based on these
 embeddings.

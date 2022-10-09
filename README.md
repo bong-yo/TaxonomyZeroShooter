@@ -99,3 +99,8 @@ The two main results are:
         ```bash
         python ESS_benchmarking.py --gpu_no --level --topn --dataset 
         ```
+    * Compute Bayesian Information Criterion (BIC) for Ground Distribution modelling:
+        Relevanche Threshold $\alpha_l$ of each label *l*, is a central parameter of the Upwards Score Propagation (UPS) mechanism, and it is found by computing the distribution of Z-STC scores of *l* over a set of irrelevant Wikipedia articles. The Ground Distribution obtained is then parametrized by some known distribution, which is chosen out of a pool of known distributions by applying the Bayesian Information Criterion (BIC) for model selection:
+        ```bash
+        python ground_PDF_modelling.py
+        ```    
