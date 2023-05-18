@@ -9,7 +9,6 @@ import numpy as np
 from scipy.stats import gumbel_r, norm, expon, halfnorm, lognorm
 from src.utils import FileIO
 from src.encoders import ZeroShooterZSTC
-from globals import Paths
 
 
 class DistributionEstimator:

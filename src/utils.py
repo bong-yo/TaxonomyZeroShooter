@@ -72,7 +72,7 @@ class FileIO:
     @staticmethod
     def write_json(data, filename):
         with open(filename, "w", encoding="utf8") as f:
-            json.dump(data, f)
+            json.dump(data, f, default=str)
 
     @staticmethod
     def read_excel(filename, sheet_name="Sheet1"):

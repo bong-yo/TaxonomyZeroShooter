@@ -116,7 +116,8 @@ class PosteriorScoresPropagation:
         """
         logger.info('computing Relevance Thresholds alphas')
         variance_estimator = VarianceEstimator(glob(f'{Paths.WIKI_DIR}/*'), self.encoder)
-        label2alpha = variance_estimator.estimate_lognormal(self.data.labels_flat, thresh_perc=0.99)
+        label2alpha = \
+            variance_estimator.estimate_lognormal(self.data.labels_flat, thresh_perc=0.99)
         return label2alpha
 
     def apply_USP(self, prior_trees: Iterable[Dict], label2alpha: Dict[str, float]) -> List:

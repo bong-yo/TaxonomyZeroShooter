@@ -1,7 +1,6 @@
 import logging
 from typing import List, Dict, Tuple
 from sklearn.metrics import precision_recall_fscore_support
-import numpy as np
 
 logger = logging.getLogger('zeroshot-logger')
 

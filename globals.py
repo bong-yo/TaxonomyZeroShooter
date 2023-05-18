@@ -53,7 +53,7 @@ class Paths:
     MAIN_DIR = dirname(abspath(__file__))
     SRC_DIR = f"{MAIN_DIR}/src"
     RESULTS_DIR = f"{MAIN_DIR}/results"
-    MODEL_SAVES = f"{MAIN_DIR}/model_saves"
+    SAVE_DIR = f"{MAIN_DIR}/saves"
     DATASETS_DIR = f"{dirname(MAIN_DIR)}/datasets"
     WOS_DIR = f'{DATASETS_DIR}/WebOfScience/Meta-data'
     DBP_DIR = f'{DATASETS_DIR}/DBPedia_Extract'
