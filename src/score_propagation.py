@@ -1,10 +1,16 @@
-from typing import Dict
+from typing import Dict, List
 import numpy as np
+import torch
+from torch import Tensor
+from copy import deepcopy
+from src.models import SigmoidModel
 
 
 class UpwardScorePropagation:
-    def __init__(self, label2alpha: Dict[str, float]) -> None:
+    def __init__(self, label2alpha: Dict[str, float], label2id: Dict[str, int]) -> None:
         self.label2alpha = label2alpha  # Scores below this threshold do not contibute to USP.
+        self.label2id = label2id
+        self.sigmoid_gate_model = SigmoidModel(label2alpha, label2id)
 
     def additive_H(self, prob_tree, alpha, beta):
         '''Performs the Upward Propagation System (UPS)
@@ -21,16 +27,16 @@ class UpwardScorePropagation:
                     continue
                 elif alpha < child_posterior <= beta:
                     mids.append(child_posterior)
-                elif  child_posterior > beta:
+                elif child_posterior > beta:
                     highs += child_posterior
-            mids = 0 if not mids else sum(mids)/len(mids)
+            mids = 0 if not mids else sum(mids) / len(mids)
             ups_score = mids + highs
             return ups_score
         dfs(prob_tree)
         return prob_tree
 
-    def scaling_H(self, prob_tree: Dict):
-        '''Perform the Upward Propagation System (UPS)
+    def scaling_H(self, prob_tree: Dict) -> Dict:
+        '''Perform the Upward Score Propagation (USP):
         by SCALING UP the score of the node x according to the difference of similarity
         with each children y: S(x) = S(x) * exp( min(0, sim_y - sim_x) )'''
         def _usp(node, is_root: bool = False):
@@ -48,3 +54,42 @@ class UpwardScorePropagation:
             return score
         _usp(prob_tree, is_root=True)
         return prob_tree
+
+    def gate_H(self, prior_scores_flat: List[float], tax_tree: Dict, no_grad: bool) -> Dict:
+        '''Perform the Upward Score Propagation (USP):
+        Relevance Threshold alpha acts like a GATE, i.e., score is propagated
+        from children to parent ONLY IF children score is > alpha.
+        Children scores are summed and scaled by tanh.
+
+        Parameters
+        ----------
+        :prior_scores_flat List[float]: List of ZSTC scores for each label (labels
+                                        position in the list are saved in self.label2id);
+        :tax_tree Dict: Taxonomy tree (dict of dicts).
+        :grad bool: if True compute gradients of the 'sigmoid_gate_model', else no_grad().
+
+        Return
+        ------
+        :posterior_tree Dict: Taxonomy tree with posterior scores for each label.
+        '''
+        def _usp(root):
+            nonlocal prior_scores_flat
+            upwards_propag_score = 0
+            for label, children in root.items():
+                prior_score = prior_scores_flat[self.label2id[label]]
+                children_score = _usp(children)
+                posterior_score = torch.tanh(prior_score + children_score)
+                if no_grad:
+                    with torch.no_grad():
+                        propag_coeff = self.sigmoid_gate_model(posterior_score, self.label2id[label])
+                else:
+                    propag_coeff = self.sigmoid_gate_model(posterior_score, self.label2id[label])
+                upwards_propag_score += propag_coeff * posterior_score
+                root[label]['prob'] = posterior_score
+            return upwards_propag_score
+
+        prior_scores_flat = Tensor(prior_scores_flat)
+
+        posterior_tree = deepcopy(tax_tree)
+        _usp(posterior_tree)
+        return posterior_tree

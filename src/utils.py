@@ -1,10 +1,63 @@
-from os import stat
-from typing import List, Any
+from glob import glob
+from typing import List, Any, Dict
 import json
 import openpyxl
 import numpy as np
 import pickle
+from collections import deque
 
+
+def flatten_tree(tree: Dict) -> Dict[str, float]:
+    """Flat dictionary {label: score} of the posterior scores
+
+    Parameters
+    ----------
+    :tree Dict: Taxonomy tree with posterior scores.
+
+    Returns
+    -------
+    :flat_scores Dict[str, float]: flat dicitonary {label: label_posterior_score}
+    """
+    def _dfs(root: Dict) -> None:
+        nonlocal flat_scores
+        for node, children in root.items():
+            score = children.pop('prob')
+            flat_scores[node] = score
+            _dfs(children)
+            children['prob'] = score
+    flat_scores = {}
+    _dfs(tree)
+    return flat_scores
+
+def get_taxonomy_levels_top_label(tree: Dict) -> List[str]:
+    """BFS of the taxonomy tree of scores relative to one document,
+    and for each level get top label.
+    Note: With this algo it might be that the top label of level N is not a child of
+    top label of level N-1.
+
+    Parameters
+    ----------
+    tree: Dict  -  Taxonomy tree with scores relative to one document.
+
+    Returns
+    -------
+    top_labels_levels: List[str]  -  List of top label for each level.
+    """
+    labels_scores_level, top_labels_levels = [], []
+    queue = deque([(k, v, 0) for k, v in tree.items()])
+    while queue:
+        node, children, level = queue.popleft()
+        if level == len(labels_scores_level) or not queue:  # Catch last level with 'not queue'.
+            if len(labels_scores_level) != 0:
+                # Get last-level label with higher score.
+                top_label = max(labels_scores_level[-1], key=lambda x: x[1])[0]
+                top_labels_levels.append(top_label)
+            labels_scores_level.append([])
+        score = children.pop('prob')
+        labels_scores_level[-1].append((node, score))
+        for k, child in children.items():
+            queue.append((k, child, level + 1))
+    return top_labels_levels
 
 def is_number(s):
     try:
@@ -38,14 +91,14 @@ def H(x):
     Hmax = np.log2(N)
     log_mask = np.ma.log(x)
     log_regularized = log_mask.filled(0)
-    return -np.sum(x * log_regularized, axis=-1)  / Hmax
+    return -np.sum(x * log_regularized, axis=-1) / Hmax
 
 def entropy(x: np.array) -> np.array:
     n = x.shape[-1]
     return -np.sum(x * np.log2(x), axis=-1) / np.log2(n)
 
 def STDev(x):
-    return np.sqrt(np.sum((x - np.mean(x, axis=-1).reshape(-1, 1))**2, axis=-1)/x.shape[-1])
+    return np.sqrt(np.sum((x - np.mean(x, axis=-1).reshape(-1, 1))**2, axis=-1) / x.shape[-1])
 
 
 class FileIO:
@@ -70,7 +123,7 @@ class FileIO:
             return json.load(f)
 
     @staticmethod
-    def write_json(data, filename):
+    def write_json(data, filename: str):
         with open(filename, "w", encoding="utf8") as f:
             json.dump(data, f, default=str)
 
@@ -93,8 +146,8 @@ class FileIO:
     def write_pickle(data, filename):
         with open(filename, 'wb') as f:
             pickle.dump(data, f)
-    
+
     @staticmethod
     def read_pickle(filename):
-        with open(filename,'rb') as f:
+        with open(filename, 'rb') as f:
             return pickle.load(f)

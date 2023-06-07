@@ -11,6 +11,30 @@ from src.utils import FileIO
 from src.encoders import ZeroShooterZSTC
 
 
+def compute_labels_alpha(labels: List[str],
+                         wiki_folder: str,
+                         encoder: ZeroShooterZSTC) -> Dict[str, float]:
+    """Compute Relevance Threshold alpha for each label.
+    For each label:
+    - Compute distribution of Z-STC scores on 1000 ground Wikipedia articles 
+        (randomly selected therefore unrelated to the label)
+    - Gumbel distribution mean and sigma are fitted on Z-STC scores
+    - Compute alpha(label) = mean(label) + 3 sigma(label)
+
+    Parameters
+    ----------
+    :labels List[str]:  List of all labels of the taxonomy;
+    :wiki_folder str:  path to the wiki articles for the Ground Distribution;
+    :encoder ZeroShooterZSTC:  Text Encoder for ZSTC.
+
+    Return
+    ------
+    :label2alpha Dict[str, float]:  Dictionary of label: alpha(label)
+    """
+    variance_estimator = VarianceEstimator(glob(f'{wiki_folder}/*'), encoder)
+    label2alpha = variance_estimator.estimate_lognormal(labels, thresh_perc=0.99)
+    return label2alpha
+
 class DistributionEstimator:
     """Fit Right-Gumbel distribution on the similarity scores between each label and 
     each document,
@@ -53,7 +77,7 @@ class DistributionEstimator:
         mu, sigma = expon.fit(similarities)
         pdf = halfnorm.pdf(cls.X, mu, sigma)
         return mu, sigma, pdf
-    
+
     @classmethod
     def plot(cls, y: np.array, pdf, pdf_label: str, plot_name: str) -> None:
         plt.hist(y, bins=200, range=cls.RANGE, label='Z-STC Ground PDF', density=True)
@@ -66,15 +90,15 @@ class VarianceEstimator:
     def __init__(self, docs_folder: str, encoder: ZeroShooterZSTC) -> None:
         base_wiki_documents = docs_folder  # Set of randomly scraped Wikipedia articles.
         self.texts = [
-            FileIO.read_text(filename) 
+            FileIO.read_text(filename)
             for filename in base_wiki_documents
         ]
         self.encoder = encoder
-    
+
     def estimate_gumbel(self, labels: List[str]) -> Dict[str, float]:
         """Estimate Gumbel mean and sigma on the ground Wikipedia articles
         for each label in the taxonomy
-        
+
         Returns
         -------
         label2mean: Dict[str, float] - For each label, mean of Gumble ditribution fit 

@@ -44,10 +44,9 @@ class PriorScoresZeroShooting:
             probs_tree = deepcopy(self.tax_tree)
             _fill_scores_dfs(probs_tree)
             yield probs_tree
-    
+
     def ZS_best_labels(self, texts: List[str], levels_labels: List[List[str]]):
         """For each level of the taxonomy, chose the label with higher score.
-        
         Parameters
         ----------
         texts: List[str] -  List of texts for ZSTE.
@@ -60,12 +59,12 @@ class PriorScoresZeroShooting:
                                  res[1]    "   "    "   "           lev 1   "  " 
         """
         docs_scores = self.compute_prior_scores(texts)
-        levels_labels_ids = [[self.label2id[l] for l in lev] for lev in levels_labels]
+        levels_labels_ids = [[self.label2id[lab] for lab in lev] for lev in levels_labels]
 
-        return  [
+        return [
             [
                 levels_labels[i][best_label_id]  # Convert best label-id into label name.
-                for best_label_id in docs_scores[:, level_ids].argmax(-1)  # Get best i-th level label of every document.
+                for best_label_id in docs_scores[:, level_ids].argmax(-1)  # Get best i-th level label of every doc.
             ]
             for i, level_ids in enumerate(levels_labels_ids)  # Loop through each taxonomy level.
         ]
@@ -78,7 +77,7 @@ class PosteriorScoresPropagation:
     - get POSTERIOR scores by applying Upwards Score Propagation (USP)
     - select top scoring label for each level
     """
-    def __init__(self, 
+    def __init__(self,
                  data: Union[WebOfScience, AmazonHTC, DBPedia],
                  encoder: ZeroShooterZSTC) -> None:
         self.data = data
@@ -87,7 +86,7 @@ class PosteriorScoresPropagation:
     def compute_prior_trees(self) -> Iterable[Dict]:
         """Use Zero-Shot Semantic Text Classification (Z-STC) to assign a prior score for each
         label purely based on the semantics of tghe label and of the documents.
-        
+
         Return
         ------
         prior_trees: Iterable[Dict]  -  An iterable of the taxonomy tree for each doc,
@@ -98,9 +97,9 @@ class PosteriorScoresPropagation:
         prior_scores = PriorScoresZeroShooting(
             self.encoder, self.data.tax_tree, self.data.labels_flat
         )
-        scores = prior_scores.compute_prior_scores(self.data.abstracts)
-        prior_trees = prior_scores.build_prior_scores_trees(scores)
-        return prior_trees
+        prior_flat = prior_scores.compute_prior_scores(self.data.abstracts)
+        prior_trees = prior_scores.build_prior_scores_trees(prior_flat)
+        return prior_trees, prior_flat, prior_scores.label2id
 
     def compute_labels_alpha(self) -> Dict[str, float]:
         """Compute Relevance Threshold alpha for each label.
@@ -120,20 +119,24 @@ class PosteriorScoresPropagation:
             variance_estimator.estimate_lognormal(self.data.labels_flat, thresh_perc=0.99)
         return label2alpha
 
-    def apply_USP(self, prior_trees: Iterable[Dict], label2alpha: Dict[str, float]) -> List:
+    def apply_USP(self,
+                  prior_scores_flat: Iterable[Dict],
+                  label2id: Dict[str, int],
+                  label2alpha: Dict[str, float]) -> List:
         """
         Compute posterior scores trees by apply Upwards Score Propagation (USP).
         """
         logger.info('applying USP')
         ups = UpwardScorePropagation(label2alpha)
         # For each document prior-tree apply USP to get posterior scores.
-        for prior_tree in prior_trees:
-            yield ups.scaling_H(prior_tree)
-    
-    def get_levels_top_label(self, tree: Dict) -> List[str]:
-        """BFS of the taxonomy tree of scores relative to one document, 
-        and for each level get top label. 
-        Note: With this algo it might be that the top label of level N is not a child of 
+        for prior_scores in prior_scores_flat:
+            yield ups.gate_H(prior_scores, label2id, self.data.tax_tree)
+
+    @staticmethod
+    def get_levels_top_label(tree: Dict) -> List[str]:
+        """BFS of the taxonomy tree of scores relative to one document,
+        and for each level get top label.
+        Note: With this algo it might be that the top label of level N is not a child of
         top label of level N-1.
 
         Parameters
@@ -159,7 +162,7 @@ class PosteriorScoresPropagation:
             for k, child in children.items():
                 queue.append((k, child, level + 1))
         return top_labels_levels
-    
+
     def get_branches_top_label(self, tree: Dict) -> List[str]:
         """DFS of the taxonomy tree of scores relative to one document,
         every time, only the branch relative to the top label at level N is descended,

@@ -17,7 +17,6 @@ from globals import Globals
 logger = logging.getLogger('zeroshot-logger')
 
 
-
 class Batcher:
     @classmethod
     def create_batches(cls, data: List[str], size: int) -> List[List[str]]:
@@ -33,7 +32,7 @@ class ZeroShooter:
 class ZeroShooterZSTC():
     '''Class of text encoders that encode according to Z-STE
     (i.e. documents and labels separately)'''
-    def __init__(self, model_name: str='all-mpnet-base-v2') -> None:
+    def __init__(self, model_name: str = 'all-mpnet-base-v2') -> None:
         super(ZeroShooterZSTC, self).__init__()
         self.encoder = SentenceTransformer(model_name).to(Globals.DEVICE)
 
@@ -46,9 +45,10 @@ class ZeroShooterZSTC():
         return self.labels_embs
 
     def compute_labels_scores(self,
-                           texts: Union[str, List[str]],
-                           labels: Union[str, List[str]]=None,
-                           encoding_method: str="base") -> np.array:
+                              texts: Union[str, List[str]],
+                              labels: Union[str, List[str]] = None,
+                              encoding_method: str = "base",
+                              floor_to_zero: bool = True) -> np.array:
         texts, labels = self.check_inputs(texts, labels)
         # Compute sts similarity by batch.
         if encoding_method == 'base':
@@ -57,14 +57,17 @@ class ZeroShooterZSTC():
             docs_embs = self.encode_ess(texts)
         else:
             logger.error(f"Unsupported encoding method: {encoding_method}")
-        return cos_sim(docs_embs, self.labels_embs).numpy() # Matrix N x M, N docs and M labels.
+        scores = cos_sim(docs_embs, self.labels_embs).numpy()  # Matrix N x M, N docs and M labels.
+        if floor_to_zero:
+            scores[scores < 0] = 0
+        return scores
 
-    def encode_base(self, docs: List[str], show_progress_bar: bool=False):
+    def encode_base(self, docs: List[str], show_progress_bar: bool = True):
         """Naively encode the whole document."""
         with torch.no_grad():
             return self.encoder.encode(docs, show_progress_bar=show_progress_bar)
-    
-    def encode_ess(self, 
+
+    def encode_ess(self,
                    docs: List[str],
                    min_len: int = 20,
                    topn: int = 10) -> np.array:

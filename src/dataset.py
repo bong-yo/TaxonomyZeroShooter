@@ -21,11 +21,11 @@ class TaxonomyBase:
 
     def load_from_file(self, filename: str) -> List[str]:
         return FileIO.read_json(filename)
-    
+
     def get_taxonomy_levels(self, tree: Dict) -> Tuple[List[List[str]], List[str]]:
         '''
         Return list of unique labels for each level, given the taxonomy tree.
-        
+
         Parameters
         ----------
         tree: Dict[Dict[...]] - Taxonomy tree in the form of nested Dictionaries
@@ -42,7 +42,7 @@ class TaxonomyBase:
     def traverse_bfs(self, tree: Dict) -> List[str]:
         """
         BFS traverse of the Taxonomy tree.
-        - Perform relabelling during traverse if a non-null relabel map 
+        - Perform relabelling during traverse if a non-null relabel map
             'self.label2rename' is provided.
         - Save labels in a separate list for each level.
         """
@@ -71,12 +71,13 @@ class TaxonomyBase:
 
 class BaseData(TaxonomyBase):
     """
-    Base class to handle the common format the data should have to be fed to the 
+    Base class to handle the common format the data should have to be fed to the
     ML algos
 
     Parameters
     ----------
-    taxonomy: Union[Dict, str] - can be two things: 1) the Taxonomy tree itself, in the form of dict of dicts   2) path to the json where the taxonomy tree is stored
+    taxonomy: Union[Dict, str] - can be two things: 1) the Taxonomy tree itself, in the form of dict of dicts
+                                2) path to the json where the taxonomy tree is stored
     documents: Union[str, List[str]] - text or list of texts to be classified
     labels_remapping: Dict[str, str] - a dictionary in case one wants to change name
                                        to the taxonomy labels.
@@ -87,23 +88,21 @@ class BaseData(TaxonomyBase):
     labels_flat:   List[str] - Flat list of all labels (ignoring tree structure).
     """
     def __init__(self,
-        taxonomy: Union[Dict, str],
-        documents: Union[str, List[str]],
-        labels_remapping: Dict[str, str] = {}) -> None:
+                 taxonomy: Union[Dict, str],
+                 documents: Union[str, List[str]] = [],
+                 labels_remapping: Dict[str, str] = {}) -> None:
         super(BaseData, self).__init__(labels_remapping)
         if isinstance(documents, str):
             documents = [documents]
         self.abstracts: List[str] = documents
         self.tax_tree: Dict = self.load_taxonomy_tree(taxonomy)
         self.labels_levels, self.labels_flat = self.get_taxonomy_levels(self.tax_tree)
-    
+
     def load_taxonomy_tree(self, tree: Union[Dict, str]):
         if isinstance(tree, str):
             return self.load_from_file(tree)
         elif isinstance(tree, dict):
             return tree
-
-
 
 
 class WebOfScience(BaseData):
@@ -123,9 +122,9 @@ class WebOfScience(BaseData):
         # Get taxonomy.
         self.tax_tree = self.load_taxonomy_tree(f'{Paths.WOS_DIR}/tax_tree.json')
         self.labels_levels, self.labels_flat = self.get_taxonomy_levels(self.tax_tree)
-        
+
         # Load documents.
-        assert(datasplit in {'train', 'valid', 'test', 'all'}), 'Wrong datasplit name.'
+        assert datasplit in {'train', 'valid', 'test', 'all'}, 'Wrong datasplit name.'
         filename = f'{Paths.WOS_DIR}/train.xlsx' if datasplit == 'train' \
             else f'{Paths.WOS_DIR}/valid.xlsx' if datasplit == 'valid' \
             else f'{Paths.WOS_DIR}/test.xlsx' if datasplit == 'test' \
@@ -150,12 +149,12 @@ class DBPedia(BaseData):
         self.tax_tree_file = f'{Paths.DBP_DIR}/tax_tree.json'
         if build_tree:
             self.build_tax_tree()
-        
+
         # Get taxonomy.
         self.tax_tree = self.load_taxonomy_tree(f'{Paths.DBP_DIR}/tax_tree.json')
         self.labels_levels, self.labels_flat = self.get_taxonomy_levels(self.tax_tree)
 
-        assert(datasplit in {'train', 'valid', 'test'}), 'Wrong datasplit name.'
+        assert datasplit in {'train', 'valid', 'test'}, 'Wrong datasplit name.'
         filename = self.train_file if datasplit == 'train' \
             else self.valid_file if datasplit == 'valid' \
             else self.test_file
@@ -201,7 +200,7 @@ class AmazonHTC(BaseData):
         self.tax_tree = self.load_taxonomy_tree(f'{Paths.AHTC_DIR}/tax_tree.json')
         self.labels_levels, self.labels_flat = self.get_taxonomy_levels(self.tax_tree)
 
-        assert(datasplit in {'valid', 'test'}), 'Wrong datasplit name.'
+        assert datasplit in {'valid', 'test'}, 'Wrong datasplit name.'
         filename = self.test_file if datasplit == 'test' else self.valid_file
         data = pd.read_csv(filename).head(topn).fillna('')
 
