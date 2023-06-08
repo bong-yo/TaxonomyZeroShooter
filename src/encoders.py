@@ -62,7 +62,7 @@ class ZeroShooterZSTC():
             scores[scores < 0] = 0
         return scores
 
-    def encode_base(self, docs: List[str], show_progress_bar: bool = True):
+    def encode_base(self, docs: List[str], show_progress_bar: bool = False):
         """Naively encode the whole document."""
         with torch.no_grad():
             return self.encoder.encode(docs, show_progress_bar=show_progress_bar)
@@ -72,7 +72,7 @@ class ZeroShooterZSTC():
                    min_len: int = 20,
                    topn: int = 10) -> np.array:
         """Encode each document with Entropy-based Sentence Selection (ESS).
-        The encoding of the original document is recover as the average of the 
+        The encoding of the original document is recover as the average of the
         embeddings of all of its sentences, each one weighted with its own entropy.
 
         Parameters
@@ -91,7 +91,7 @@ class ZeroShooterZSTC():
             # Embed each sentence separately.
             with torch.no_grad():
                 sents_emb = self.encoder.encode(sents, show_progress_bar=False)
-            # For each sentence, compute the probability of belonging to each label, as 
+            # For each sentence, compute the probability of belonging to each label, as
             # the absolute value of the cosine similarity between sent and labels.
             sents_labels_probs = abs(cos_sim(sents_emb, self.labels_embs).numpy())
             s = entropy(sents_labels_probs)
@@ -117,13 +117,12 @@ class ZeroShooterZSTC():
             texts = [texts]
         return texts, labels
 
-
     def classify(self,
                  texts: List[str],
                  labels: List[str] = None,
                  topn: int = None) -> List[str]:
         similarity = self.compute_similarity(texts, labels)
-        topn_sims = np.argsort(similarity, axis=-1)[:, ::-1][:,: topn]
+        topn_sims = np.argsort(similarity, axis=-1)[:, ::-1][:, :topn]
         return [
             [
                 (self.id2label[label_id], similarity[row, label_id])
@@ -136,7 +135,7 @@ class ZeroShooterZSTC():
 class ZeroshooterTARS(Batcher):
     def __init__(self, batch_size) -> None:
         super(ZeroshooterTARS, self).__init__()
-        flair.device = torch.device(f'cuda:4')
+        flair.device = torch.device('cuda:4')
         self.batch_size = batch_size
         self.model = TARSClassifier.load('tars-base')
         self.model.tars_model.multi_label = True
@@ -172,9 +171,9 @@ class ZeroshooterBART:
                  texts: List[str],
                  labels: List[str] = None,
                  topn: int = None) -> List[str]:
-        hypothesis_template = 'This text is about {}.' # the template used in this demo
-        results =  self.model(texts, labels, hypothesis_template=hypothesis_template,
-                              multi_label=True)
+        hypothesis_template = 'This text is about {}.'  # the template used in this demo
+        results = self.model(texts, labels, hypothesis_template=hypothesis_template,
+                             multi_label=True)
         return [
             [(label, score) for label, score in zip(res['labels'], res['scores'])]
             for res in results
@@ -207,9 +206,9 @@ class ZeroshooterBART_2(Batcher):
                         for premise in batch
                     ])
                     logits = self.model(x.to(Globals.DEVICE))[0]
-                    entail_contradiction_logits = logits[:,[0,2]]
+                    entail_contradiction_logits = logits[:, [0, 2]]
                     probs = entail_contradiction_logits.softmax(dim=-1)
-                    probs_label.extend(probs[:,1].tolist())
+                    probs_label.extend(probs[:, 1].tolist())
             for x, p in zip(res, probs_label):
                 x[label] = p
         res = [sorted(doc.items(), key=lambda x: x[1], reverse=True) for doc in res]

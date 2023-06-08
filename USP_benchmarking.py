@@ -34,7 +34,7 @@ if __name__ == "__main__":
     savefile = f'{Paths.RESULTS_DIR}/{args.savefile}'
     DATASETS = {'WebOfScience': WebOfScience, 'DBPedia': DBPedia, 'AmazonHTC': AmazonHTC}
     MODEL_NAME = 'all-mpnet-base-v2'
-    COMPUTE_ALPHAS = True
+    COMPUTE_ALPHAS = False
     encoder = ZeroShooterZSTC(MODEL_NAME)
 
     for name, DataSet in DATASETS.items():
@@ -50,13 +50,8 @@ if __name__ == "__main__":
 
         # Compute posterior scores for each doc.
         tax_zero_shooter = TaxZeroShot(data.tax_tree, label_alphas_filename)
+        tax_zero_shooter.USP.sigmoid_gate_model.b
         _, posterior_scores_trees = tax_zero_shooter.forward(data.abstracts, no_grad=True)
-
-        # scorer = PosteriorScoresPropagation(data, encoder)
-        # # Compute Z-STC prior scores and propagate with USP.
-        # prior_trees, priors_flat, label2id = scorer.compute_prior_trees()
-        # label2alpha = scorer.compute_labels_alpha()
-        # posterior_scores_trees = scorer.apply_USP(priors_flat, label2alpha)
 
         # Select top labels for each level (according to posterior scores).
         preds = [get_taxonomy_levels_top_label(tree) for tree in posterior_scores_trees]
@@ -67,4 +62,4 @@ if __name__ == "__main__":
         performance = perf_displayer.compute_levels_performance()
         msg += performance
         print(msg)
-        # FileIO.append_text(msg, savefile)
+        FileIO.append_text(msg, savefile)

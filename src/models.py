@@ -1,5 +1,4 @@
 from typing import Dict
-import torch
 import torch.nn as nn
 from torch import Tensor
 
@@ -12,9 +11,9 @@ class SigmoidModel(nn.Module):
         id2label = {id: lab for lab, id in label2id.items()}
         alphas = [label_alpha[id2label[i]] for i in range(len(label_alpha))]
         self.a = nn.Parameter(Tensor(alphas), requires_grad=True)
-        self.b = nn.Parameter(Tensor([100]), requires_grad=True)
+        self.b = nn.Parameter(Tensor([10]), requires_grad=True)
         self.g = nn.Sigmoid()
 
     def forward(self, x: Tensor, idx: int):
-        h = self.b * (x - self.a[idx])
+        h = -self.b * (x - self.a[idx])
         return self.g(h)

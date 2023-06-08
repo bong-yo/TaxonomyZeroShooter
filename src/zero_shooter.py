@@ -18,13 +18,13 @@ class TaxZeroShot:
             self.label2alpha = FileIO.read_json(label_thresholds_file)
         else:
             self.label2alpha = self.prior_scores
-        self.UPS = UpwardScorePropagation(self.label2alpha, self.label2id)
+        self.USP = UpwardScorePropagation(self.label2alpha, self.label2id)
 
     def forward(self, documents: List[str], no_grad: bool = True) -> List[Dict]:
         priors_flat = self.prior_scores.compute_prior_scores(documents)
         res_flat, res_trees = [], []
         for prior_scores_flat in priors_flat:
-            posterior_tree = self.UPS.gate_H(prior_scores_flat, self.data.tax_tree, no_grad)
+            posterior_tree = self.USP.gate_H(prior_scores_flat, self.data.tax_tree, no_grad)
             posterior_flat = flatten_tree(posterior_tree)
             res_trees.append(posterior_tree)
             res_flat.append(posterior_flat)
