@@ -12,8 +12,8 @@ class SigmoidModel(nn.Module):
         alphas = [label_alpha[id2label[i]] for i in range(len(label_alpha))]
         self.a = nn.Parameter(Tensor(alphas), requires_grad=True)
         self.b = nn.Parameter(Tensor([10]), requires_grad=True)
-        self.g = nn.Sigmoid()
+        self.g = nn.Sigmoid()  # Sigmoid = 1 / (1 + exp(-x)).
 
     def forward(self, x: Tensor, idx: int):
-        h = -self.b * (x - self.a[idx])
-        return self.g(h)
+        h = self.b * (x - self.a[idx])
+        return self.g(h)[0]

@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     for name, DataSet in DATASETS.items():
         msg = f"\n\n---------------------  {name} - {MODEL_NAME} --------------------\n"
-        data = DataSet('test', topn=None)
+        data = DataSet('test', topn=100)
 
         # Compute label alphas.
         label_alphas_filename = f'{Paths.SAVE_DIR}/label_alphas_{name}.json'
@@ -62,4 +62,4 @@ if __name__ == "__main__":
         performance = perf_displayer.compute_levels_performance()
         msg += performance
         print(msg)
-        FileIO.append_text(msg, savefile)
+        # FileIO.append_text(msg, savefile)
