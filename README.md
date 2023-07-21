@@ -12,7 +12,11 @@ Classification of text according to a custom (hierarchical) taxonomy of categori
 To map a set of `texts` according to a custom `taxonomy` call
 ```python
 from classifier import ZeroShootTaxonomyMapper
-top_scores, usp_scores = ZeroShootTaxonomyMapper.run(taxonomy, texts)
+top_scores, usp_scores = ZeroShootTaxonomyMapper.run(
+    taxonomy,
+    texts,
+    compute_alpha_thresholds,
+    'path/to/stored/alpha_thresholds')
 results = list(zip(texts, usp_scores, top_scores))
 ```
 For each input text, `results` contains:
