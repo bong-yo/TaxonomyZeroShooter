@@ -1,27 +1,32 @@
 from src.zero_shooter import TaxZeroShot
 from src.modeling import Trainer
+from src.dataset import WebOfScience
 from globals import Paths
 
 
 if __name__ == "__main__":
 
-    tax_tree = {
-        'Computer Science': {'Machine Learning': {}, 'Quantum Computing': {}},
-        'Art': {'Renaissance': {}, 'Cubism': {}, 'Impressionism': {}},
-        'Sport': {'Athletics': {}, 'Football': {}, 'Tennis': {}}
-    }
+    # tax_tree = {
+    #     'Computer Science': {'Machine Learning': {}, 'Quantum Computing': {}},
+    #     'Art': {'Renaissance': {}, 'Cubism': {}, 'Impressionism': {}},
+    #     'Sport': {'Athletics': {}, 'Football': {}, 'Tennis': {}}
+    # }
 
-    docs = [
-        'OpenAI released DALL-E: an amazing neural network that leverages Transformers \
-            architecture and Diffusion model training to generate images starting from text',
-        'Usain Bolt was arguably the fastest sprinter that has ever run, and it currently\
-            holds the world record for both 100 meters and 200 meters'
-    ]
+    # docs = [
+    #     'OpenAI released DALL-E: an amazing neural network that leverages Transformers \
+    #         architecture and Diffusion model training to generate images starting from text',
+    #     'Usain Bolt was arguably the fastest sprinter that has ever run, and it currently\
+    #         holds the world record for both 100 meters and 200 meters'
+    # ]
 
-    labels_supervised = [
-        ['Computer Science', 'Art', 'Machine Learning'],
-        ['Sport', 'Athletics']
-    ]
+    # labels_supervised = [
+    #     ['Computer Science', 'Art', 'Machine Learning'],
+    #     ['Sport', 'Athletics']
+    # ]
+
+    train = WebOfScience('train', topn=None)
+    valid = WebOfScience('valid', topn=None)
+    test= WebOfScience('test', topn=None)
 
     tax_zero_shooter = TaxZeroShot(tax_tree, f'{Paths.SAVE_DIR}/label_alphas_prova.json')
     trainer = Trainer()

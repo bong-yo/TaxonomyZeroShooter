@@ -69,6 +69,7 @@ class PriorScoresZeroShooting:
             for i, level_ids in enumerate(levels_labels_ids)  # Loop through each taxonomy level.
         ]
 
+
 class PosteriorScoresPropagation:
     """
     Class to apply the overall process of taxonomy scoring
@@ -79,9 +80,11 @@ class PosteriorScoresPropagation:
     """
     def __init__(self,
                  data: Union[WebOfScience, AmazonHTC, DBPedia],
-                 encoder: ZeroShooterZSTC) -> None:
+                 encoder: ZeroShooterZSTC,
+                 label2alpha: Dict[str, float]) -> None:
         self.data = data
         self.encoder = encoder
+        self.USP = UpwardScorePropagation(label2alpha)
 
     def compute_prior_trees(self) -> Iterable[Dict]:
         """Use Zero-Shot Semantic Text Classification (Z-STC) to assign a prior score for each
@@ -121,16 +124,14 @@ class PosteriorScoresPropagation:
 
     def apply_USP(self,
                   prior_scores_flat: Iterable[Dict],
-                  label2id: Dict[str, int],
-                  label2alpha: Dict[str, float]) -> List:
+                  label2id: Dict[str, int]) -> List:
         """
         Compute posterior scores trees by apply Upwards Score Propagation (USP).
         """
         logger.info('applying USP')
-        ups = UpwardScorePropagation(label2alpha)
         # For each document prior-tree apply USP to get posterior scores.
         for prior_scores in prior_scores_flat:
-            yield ups.gate_H(prior_scores, label2id, self.data.tax_tree)
+            yield self.USP.gate_H(prior_scores, label2id, self.data.tax_tree)
 
     @staticmethod
     def get_levels_top_label(tree: Dict) -> List[str]:

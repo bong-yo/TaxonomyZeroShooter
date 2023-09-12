@@ -1,4 +1,3 @@
-import sys
 import logging
 
 DEFAULT_LOG_FORMAT = "[%(asctime)s][%(filename)s]- %(levelname)s: %(message)s"

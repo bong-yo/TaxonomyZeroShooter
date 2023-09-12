@@ -41,12 +41,13 @@ class UpwardScorePropagation:
         with each children y: S(x) = S(x) * exp( min(0, sim_y - sim_x) )'''
         def _usp(node, is_root: bool = False):
             score = 0 if is_root else node.pop('prob')
+            score = abs(score)  # Make sure score is positive.
             for label, child in node.items():
                 child_score = _usp(child, is_root=False)
                 if child_score >= self.label2alpha[label] and child_score > score:
                     score = child_score
                 else:
-                    delta = max(0, child_score - abs(score))
+                    delta = max(0, child_score - score)
                     score *= np.exp(delta)
                     score = min(1, score)
             if not is_root:

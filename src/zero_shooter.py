@@ -8,10 +8,10 @@ from src.utils import FileIO, flatten_tree
 
 class TaxZeroShot:
     def __init__(self, taxonomy: Dict, label_thresholds_file: str = None) -> None:
-        encoder = ZeroShooterZSTC('all-mpnet-base-v2')
+        self.encoder = ZeroShooterZSTC('all-mpnet-base-v2')
         self.data = BaseData(taxonomy)
         self.prior_scores = PriorScoresZeroShooting(
-            encoder, self.data.tax_tree, self.data.labels_flat
+            self.encoder, self.data.tax_tree, self.data.labels_flat
         )
         self.label2id = self.prior_scores.label2id
         if label_thresholds_file is not None:

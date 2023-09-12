@@ -8,14 +8,22 @@ from globals import Paths
 
 
 class ZeroShootTaxonomyMapper:
-    def __init__(self, encoder, load_precomputed_thresholds: str) -> None:
-        super(ZeroShootTaxonomyMapper, self).__init__()
+    def __init__(self,
+                 taxonomy: Union[Dict, str],
+                 documents: Union[str, List[str]],
+                 load_precomputed_thresholds: bool,
+                 label_thresholds_file: str):
+        self.data = BaseData(taxonomy, documents)
+        self.encoder = ZeroShooterZSTC('all-mpnet-base-v2')
+        # Compute or Load relevance thresholds alphas for each label.
+        if load_precomputed_thresholds:
+            self.label2alpha = FileIO.read_json(label_thresholds_file)
+        else:
+            self.label2alpha = self.scorer.compute_labels_alpha()
+            FileIO.write_json(self.label2alpha, label_thresholds_file)
+        self.scorer = PosteriorScoresPropagation(self.data, self.encoder, self.label2alpha)
 
-    def compute_posterior_trees(self,
-                                taxonomy: Union[Dict, str],
-                                documents: Union[str, List[str]],
-                                load_precomputed_thresholds: bool,
-                                label_thresholds_file: str):
+    def compute_posterior_trees(self):
         """
         Apply Zero-Shoot Taxonomy Mapper on a list of texts given a custom taxonomy.
 
@@ -34,20 +42,13 @@ class ZeroShootTaxonomyMapper:
         top_labels: List[List[str]] - List of top label for each level.
         posterior_scores_trees:   List[Dict] - Taxonomy Tree with posterior score for each label.
         """
-        data = BaseData(taxonomy, documents)
-        encoder = ZeroShooterZSTC('all-mpnet-base-v2')
-        self.scorer = PosteriorScoresPropagation(data, encoder)
         prior_scores_flat, label2id = self.scorer.compute_prior_trees()
-        # Compute or Load relevance thresholds alphas for each label.
-        if load_precomputed_thresholds:
-            label2alpha = FileIO.read_json(label_thresholds_file)
-        else:
-            label2alpha = self.scorer.compute_labels_alpha()
-            FileIO.write_json(label2alpha, label_thresholds_file)
 
         # Compute posterior scores applying USP on prior scores.
-        posterior_scores_trees = \
-            [tree for tree in self.scorer.apply_USP(prior_scores_flat, label2id, label2alpha)]
+        posterior_scores_trees = [
+            tree for tree in self.scorer.apply_USP(prior_scores_flat, label2id,
+                                                   self.label2alpha)
+        ]
         return posterior_scores_trees
 
     def get_top_branches(self, posterior_scores_trees):
@@ -88,5 +89,7 @@ if __name__ == "__main__":
         ['Sport', 'Athletics']
     ]
 
-    top_labels, usp_scores = ZeroShootTaxonomyMapper.run(tax_tree, docs, True, f'{Paths.SAVE_DIR}/label_alphas_prova.json')
+    top_labels, usp_scores = ZeroShootTaxonomyMapper.run(
+        tax_tree, docs, True, f'{Paths.SAVE_DIR}/label_alphas_prova.json'
+    )
     results = list(zip(docs, usp_scores, top_labels))
