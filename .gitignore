@@ -17,7 +17,6 @@ dist/
 .venv/*
 
 # Files & folders
-prova.py
 results/*
 Ground_PDFs_plots/*
 temp/*
@@ -25,3 +24,4 @@ saves/*
 labels_sim_distribution.py
 jobs/*
 prov.ipynb
+prova.py

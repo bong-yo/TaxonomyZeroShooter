@@ -137,6 +137,8 @@ class WebOfScience(BaseData):
             [remap_level1[x.strip()] for x in data['Domain'].values],  # Labels level 1.
             [x.strip() for x in data['area'].values]  # Labels level 2.
         ]
+        self.tax_depth = len(self.Y)
+        self.n_data = len(self.abstracts)
 
 
 class DBPedia(BaseData):
@@ -166,6 +168,8 @@ class DBPedia(BaseData):
             [self.norm_label(x.strip()) for x in data['l2'].values],
             [self.norm_label(x.strip()) for x in data['l3'].values]
         ]
+        self.tax_depth = len(self.Y)
+        self.n_data = len(self.abstracts)
         logger.debug('Done opening file')
 
     def build_tax_tree(self) -> None:
@@ -211,6 +215,8 @@ class AmazonHTC(BaseData):
             Y2.append(row['Cat2'].strip())
             Y3.append(row['Cat3'].strip())
         self.Y = [Y1, Y2, Y3]
+        self.tax_depth = len(self.Y)
+        self.n_data = len(self.abstracts)
         logger.debug('Done opening file')
 
     def build_tax_tree(self) -> None:

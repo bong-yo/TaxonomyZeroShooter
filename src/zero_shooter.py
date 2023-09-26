@@ -1,4 +1,5 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
+from tqdm import tqdm
 from src.encoders import ZeroShooterZSTC
 from src.dataset import BaseData
 from src.scoring_functions import PriorScoresZeroShooting
@@ -20,7 +21,8 @@ class TaxZeroShot:
             self.label2alpha = self.prior_scores
         self.USP = UpwardScorePropagation(self.label2alpha, self.label2id)
 
-    def forward(self, documents: List[str], no_grad: bool = True) -> List[Dict]:
+    def forward(self, documents: List[str], no_grad: bool = True
+                ) -> Tuple[List[Dict], List[Dict]]:
         priors_flat = self.prior_scores.compute_prior_scores(documents)
         res_flat, res_trees = [], []
         for prior_scores_flat in priors_flat:
