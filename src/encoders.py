@@ -5,9 +5,9 @@ from nltk import sent_tokenize
 import numpy as np
 import torch
 from transformers import pipeline
-import flair
-from flair.models import TARSClassifier
-from flair.data import Sentence
+# import flair
+# from flair.models import TARSClassifier
+# from flair.data import Sentence
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from sentence_transformers import SentenceTransformer
 from sentence_transformers.util import cos_sim
@@ -132,29 +132,29 @@ class ZeroShooterZSTC():
         ]
 
 
-class ZeroshooterTARS(Batcher):
-    def __init__(self, batch_size) -> None:
-        super(ZeroshooterTARS, self).__init__()
-        flair.device = torch.device('cuda:4')
-        self.batch_size = batch_size
-        self.model = TARSClassifier.load('tars-base')
-        self.model.tars_model.multi_label = True
-        self.model.tars_model.multi_label_threshold = 0.0
+# class ZeroshooterTARS(Batcher):
+#     def __init__(self, batch_size) -> None:
+#         super(ZeroshooterTARS, self).__init__()
+#         flair.device = torch.device('cuda:4')
+#         self.batch_size = batch_size
+#         self.model = TARSClassifier.load('tars-base')
+#         self.model.tars_model.multi_label = True
+#         self.model.tars_model.multi_label_threshold = 0.0
 
-    def classify(self,
-                 texts: List[str],
-                 labels: List[str] = None,
-                 topn: int = None) -> List[str]:
-        # self.model.add_and_switch_to_new_task('zero-shot', labels, '-'.join(labels))
-        docs = [Sentence(x) for x in texts]
-        self.model.predict_zero_shot(docs, labels)
-        res = []
-        for d in docs:
-            if not d.labels:
-                res.append([('none', 0.999)])
-            else:
-                res.append(sorted([(x.value, x.score) for x in d.labels], key=lambda x: x[1], reverse=True))
-        return res
+#     def classify(self,
+#                  texts: List[str],
+#                  labels: List[str] = None,
+#                  topn: int = None) -> List[str]:
+#         # self.model.add_and_switch_to_new_task('zero-shot', labels, '-'.join(labels))
+#         docs = [Sentence(x) for x in texts]
+#         self.model.predict_zero_shot(docs, labels)
+#         res = []
+#         for d in docs:
+#             if not d.labels:
+#                 res.append([('none', 0.999)])
+#             else:
+#                 res.append(sorted([(x.value, x.score) for x in d.labels], key=lambda x: x[1], reverse=True))
+#         return res
 
 
 class ZeroshooterBART:

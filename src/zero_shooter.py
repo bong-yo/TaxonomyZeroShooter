@@ -1,5 +1,4 @@
 from typing import Dict, List, Tuple
-from tqdm import tqdm
 from src.encoders import ZeroShooterZSTC
 from src.dataset import BaseData
 from src.scoring_functions import PriorScoresZeroShooting

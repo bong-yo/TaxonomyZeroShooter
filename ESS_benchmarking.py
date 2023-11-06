@@ -8,11 +8,9 @@ import argparse
 import logging
 import numpy as np
 import torch
-import src
 from src.dataset import WebOfScience, DBPedia, AmazonHTC
-from src.encoders import ZeroShooterZSTE
-from src.utils import FileIO
-from globals import Globals, Paths
+from src.encoders import ZeroShooterZSTC
+from globals import Globals
 
 logger = logging.getLogger('zeroshot-logger')
 
@@ -40,7 +38,7 @@ if __name__ == '__main__':
         torch.cuda.set_device(args.gpu_no)
 
     data = DATASETS[args.dataset]('test', args.topn)
-    zste_model = ZeroShooterZSTE('all-mpnet-base-v2')
+    zste_model = ZeroShooterZSTC('all-mpnet-base-v2')
 
     # Encode labels of the n-th level.
     zste_model.encode_labels(data.labels_levels[args.level])
@@ -57,4 +55,3 @@ if __name__ == '__main__':
     preds = [zste_model.id2label[i] for i in np.argmax(cos_scores, axis=-1)]
     p, r, f1, _ = precision_recall_fscore_support(trues, preds, average='micro')
     logger.info(f"ESS:  Prec: {p},  Rec: {r},  F1: {f1}")
-    

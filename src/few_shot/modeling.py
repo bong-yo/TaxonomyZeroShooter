@@ -20,7 +20,6 @@ class FewShotTrainer(nn.Module):
         self.labels_all = labels_all  # ALl labels to consider (every tax layer but last).
         self.labels_train = labels_train  # Subset of labels seen during FS train.
 
-
     def train(self,
               tzs_model: TaxZeroShot,
               examples_train: List[ExampleFewShot],

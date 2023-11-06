@@ -1,5 +1,5 @@
 """
-Here we try to infer the hyper-parameters alpha and beta of USP, purely from 
+Here we try to infer the hyper-parameters alpha and beta of USP, purely from
 the distribution on the data, without using any labelled document.
 """
 from typing import List, Tuple, Dict
@@ -16,7 +16,7 @@ def compute_labels_alpha(labels: List[str],
                          encoder: ZeroShooterZSTC) -> Dict[str, float]:
     """Compute Relevance Threshold alpha for each label.
     For each label:
-    - Compute distribution of Z-STC scores on 1000 ground Wikipedia articles 
+    - Compute distribution of Z-STC scores on 1000 ground Wikipedia articles
         (randomly selected therefore unrelated to the label)
     - Gumbel distribution mean and sigma are fitted on Z-STC scores
     - Compute alpha(label) = mean(label) + 3 sigma(label)
@@ -35,8 +35,9 @@ def compute_labels_alpha(labels: List[str],
     label2alpha = variance_estimator.estimate_lognormal(labels, thresh_perc=0.99)
     return label2alpha
 
+
 class DistributionEstimator:
-    """Fit Right-Gumbel distribution on the similarity scores between each label and 
+    """Fit Right-Gumbel distribution on the similarity scores between each label and
     each document,
     return mean and sigma of the distribution."""
     GAMMA = 0.5772156649015329  # Gamma Eulero-Mascheroni.
@@ -101,8 +102,8 @@ class VarianceEstimator:
 
         Returns
         -------
-        label2mean: Dict[str, float] - For each label, mean of Gumble ditribution fit 
-                                        on similarity scores of label with every document 
+        label2mean: Dict[str, float] - For each label, mean of Gumble ditribution fit
+                                        on similarity scores of label with every document
                                         of the ground wikipedia article.
         label2sigma: Dict[str, float] - For each label, sigma of Gumble ditribution.
         """
@@ -120,11 +121,11 @@ class VarianceEstimator:
     def estimate_lognormal(self, labels: List[str], thresh_perc: float) -> Dict[str, float]:
         """Estimate LogNormal mean and sigma on the ground Wikipedia articles
         for each label in the taxonomy
-        
+
         Returns
         -------
-        label2mean: Dict[str, float] - For each label, mean of Gumble ditribution fit 
-                                        on similarity scores of label with every document 
+        label2mean: Dict[str, float] - For each label, mean of Gumble ditribution fit
+                                        on similarity scores of label with every document
                                         of the ground wikipedia article.
         label2sigma: Dict[str, float] - For each label, sigma of Gumble ditribution.
         """
@@ -151,8 +152,5 @@ class VarianceEstimator:
             self.texts, labels, encoding_method='base'
         )
         docs_labels_scores = abs(docs_labels_scores)
-        sigmas = np.sqrt(np.power(docs_labels_scores, 2).sum(axis=0) / docs_labels_scores.shape[0] )
+        sigmas = np.sqrt(np.power(docs_labels_scores, 2).sum(axis=0) / docs_labels_scores.shape[0])
         return {label: sigma for label, sigma in zip(labels, sigmas)}
-
-
-    
