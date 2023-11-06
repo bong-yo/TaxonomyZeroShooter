@@ -5,7 +5,7 @@ import numpy as np
 from copy import deepcopy
 from collections import deque
 from src.hyper_inference import VarianceEstimator
-from src.encoders import ZeroShooterZSTC, ZeroshooterBART_2, ZeroshooterTARS
+from src.encoders import ZeroShooterZSTC, ZeroshooterBART_2
 from src.dataset import WebOfScience, AmazonHTC, DBPedia
 from src.score_propagation import UpwardScorePropagation
 from globals import Paths
@@ -17,7 +17,7 @@ class PriorScoresZeroShooting:
     """Use a Text Encoder to ZeroShoot all labels prior probabilities on each document.
     At this point, prior probs. are purely based on labels and docs semantics"""
     def __init__(self,
-                 zero_shooter: Union[ZeroShooterZSTC, ZeroshooterBART_2, ZeroshooterTARS],
+                 zero_shooter: Union[ZeroShooterZSTC, ZeroshooterBART_2],
                  tax_tree: Dict,
                  labels_flat: List[str]) -> None:
         self.zero_shooter = zero_shooter
@@ -56,7 +56,7 @@ class PriorScoresZeroShooting:
         -------
         res: List[List[str]]  -  List of best labels for every document:
                                  res[0] will have the best label of lev 0 for every document.
-                                 res[1]    "   "    "   "           lev 1   "  " 
+                                 res[1]    "   "    "   "           lev 1   "  "
         """
         docs_scores = self.compute_prior_scores(texts)
         levels_labels_ids = [[self.label2id[lab] for lab in lev] for lev in levels_labels]
@@ -93,7 +93,7 @@ class PosteriorScoresPropagation:
         Return
         ------
         prior_trees: Iterable[Dict]  -  An iterable of the taxonomy tree for each doc,
-                                        where each label in the tree has associated the 
+                                        where each label in the tree has associated the
                                         prior score computed with Z-STC.
         """
         logger.info('computing Prior Relevance Scores')
@@ -107,7 +107,7 @@ class PosteriorScoresPropagation:
     def compute_labels_alpha(self) -> Dict[str, float]:
         """Compute Relevance Threshold alpha for each label.
         For each label:
-        - Compute distribution of Z-STC scores on 1000 ground Wikipedia articles 
+        - Compute distribution of Z-STC scores on 1000 ground Wikipedia articles
             (randomly selected therefore unrelated to the label)
         - Gumbel distribution mean and sigma are fitted on Z-STC scores
         - Compute alpha(label) = mean(label) + 3 sigma(label)
