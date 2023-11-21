@@ -4,13 +4,14 @@ import torch
 from torch import Tensor
 from copy import deepcopy
 from src.models import SigmoidModel
+from globals import Globals
 
 
 class UpwardScorePropagation:
     def __init__(self, label2alpha: Dict[str, float], label2id: Dict[str, int]) -> None:
         self.label2alpha = label2alpha  # Scores below this threshold do not contibute to USP.
         self.label2id = label2id
-        self.sigmoid_gate_model = SigmoidModel(label2alpha, label2id)
+        self.sigmoid_gate_model = SigmoidModel(label2alpha, label2id).to(Globals.DEVICE)
 
     def additive_H(self, prob_tree, alpha, beta):
         '''Performs the Upward Propagation System (UPS)
