@@ -79,7 +79,7 @@ class FewShotData:
             embs = self.zero_shooter.encoder.encoder.encode(texts)
         # Centroids method.
         kmeans = KMeans(n_clusters=n_shots)
-        kmeans.fit(embs)
+        kmeans.fit(embs.cpu().numpy())
         centroids = np.array(kmeans.cluster_centers_)
         closest, _ = vq(centroids, embs)
         return ids[closest]
