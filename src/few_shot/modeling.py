@@ -9,6 +9,7 @@ from torch.optim import SGD
 from sklearn.metrics import precision_recall_fscore_support
 from src.zero_shooter import TaxZeroShot
 from src.few_shot.select_FS_examples import ExampleFewShot
+from globals import Globals
 
 # Ignore sklearn warnings.
 import warnings
@@ -44,10 +45,10 @@ class FewShotTrainer(nn.Module):
                 posterior_scores_flat, _ = tzs_model.forward([doc])
                 preds = torch.stack(
                     [posterior_scores_flat[0][lab] for lab in self.labels_all]
-                )
+                ).to(Globals.DEVICE)
                 true_lab = Tensor(
                     [1 if lab == true_lab else 0 for lab in self.labels_all]
-                )
+                ).to(Globals.DEVICE)
                 loss = self.criterion(preds, true_lab)
                 loss.backward()
                 optimizer.step()
