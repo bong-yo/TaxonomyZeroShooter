@@ -10,6 +10,11 @@ from sklearn.metrics import precision_recall_fscore_support
 from src.zero_shooter import TaxZeroShot
 from src.few_shot.select_FS_examples import ExampleFewShot
 
+# Ignore sklearn warnings.
+import warnings
+warnings.filterwarnings("ignore")
+
+
 logger = logging.getLogger('few-shot_TC')
 
 
@@ -27,7 +32,7 @@ class FewShotTrainer(nn.Module):
               lr: float,
               n_epochs: int):
 
-        optimizer = SGD(tzs_model.USP.sigmoid_gate_model.parameters(), lr=lr)
+        optimizer = SGD(tzs_model.encoder.encoder.model.parameters(), lr=lr)
 
         for epoch in range(n_epochs):
             logger.info(f'Epoch {epoch+1}/{n_epochs}')
@@ -36,7 +41,7 @@ class FewShotTrainer(nn.Module):
             loss_train = 0
             for doc, true_lab in tqdm(list(zip(docs, targets))):
                 optimizer.zero_grad()
-                posterior_scores_flat, _ = tzs_model.forward([doc], no_grad=False)
+                posterior_scores_flat, _ = tzs_model.forward([doc])
                 preds = torch.stack(
                     [posterior_scores_flat[0][lab] for lab in self.labels_all]
                 )
@@ -57,7 +62,8 @@ class FewShotTrainer(nn.Module):
                  data: List[ExampleFewShot]) -> List[str]:
         texts = [example.text for example in data]
         targets = np.array([example.labels[0] for example in data])
-        posterior_scores_flat, _ = tzs_model.forward(texts, no_grad=True)
+        with torch.no_grad():
+            posterior_scores_flat, _ = tzs_model.forward(texts)
         predictions = []
         for scores in posterior_scores_flat:
             scores_subset = {lab: scores[lab] for lab in self.labels_all}

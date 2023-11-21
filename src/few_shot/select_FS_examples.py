@@ -34,13 +34,14 @@ class FewShotData:
         # Get relevant labels (just consider first level).
         labels_relevant = data.labels_levels[0]
         # Select zero_shot probs of the wanted 'labels'.
-        docs_labels_prob_flat, _ = self.zero_shooter.forward(data.abstracts, no_grad=True)
+        with torch.no_grad():
+            docs_labels_prob_flat, _ = self.zero_shooter.forward(data.abstracts)
         docs_labels_probs = [
             [label_probs_flat[lab] for lab in labels_relevant]
             for label_probs_flat in docs_labels_prob_flat
         ]
         # Compute entropy.
-        entropies = [self.compute_entropy(probs) for probs in docs_labels_probs]
+        entropies = [self.compute_entropy(prbs) for prbs in docs_labels_probs]
 
         # Select (randomly) 'n_shot' examples with entropy in the wanted range.
         examples_ids = [
@@ -63,16 +64,17 @@ class FewShotData:
         """Compute normalized entropy i.e. entropy divided by the maximum
         entropy: - sum_i p_i ln(p_i) / ln(N) where N is the number of classes."""
         sum_p = sum(p)
-        p = [x / sum_p for x in p]
         p = torch.stack(p) + 1e-8  # Avoid log(0).
-        return (- sum(p * torch.log(p)) / np.log(len(p))).tolist()
+        p = p / sum_p  # Normalize prob.
+        return (- sum(p * p.log()) / torch.tensor(p.size(0)).log()).tolist()
 
     def get_centroids_ids(self, texts: List[str], ids: List[int], n_shots: int):
         logger.debug('Computing centroids')
         # ids = torch.arange(len(texts))
         ids = torch.LongTensor(ids)
         # Filter doc embeddings within a certain range of entropy.
-        embs = self.zero_shooter.encoder.encoder.encode(texts, show_progress_bar=True)
+        with torch.no_grad():
+            embs = self.zero_shooter.encoder.encoder.encode(texts)
         # Centroids method.
         kmeans = KMeans(n_clusters=n_shots)
         kmeans.fit(embs)

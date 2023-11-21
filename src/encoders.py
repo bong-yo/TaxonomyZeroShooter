@@ -4,17 +4,23 @@ from tqdm import tqdm
 from nltk import sent_tokenize
 import numpy as np
 import torch
+from torch import Tensor
 from transformers import pipeline
 # import flair
 # from flair.models import TARSClassifier
 # from flair.data import Sentence
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
-from sentence_transformers import SentenceTransformer
+from transformers import AutoModelForSequenceClassification, AutoModel, AutoTokenizer
 from sentence_transformers.util import cos_sim
 from src.utils import entropy
 from globals import Globals
 
 logger = logging.getLogger('zeroshot-logger')
+
+
+def mean_pooling(model_embs, attention_mask):
+    token_embeddings = model_embs  # First element of model_output contains all token embeddings
+    input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+    return torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(input_mask_expanded.sum(1), min=1e-9)
 
 
 class Batcher:
@@ -24,31 +30,43 @@ class Batcher:
         return [data[i * size: (i + 1) * size] for i in range(n_batches)]
 
 
-class ZeroShooter:
-    def __init__(self) -> None:
-        pass
+class TextEncoder():
+    def __init__(self, model_name: str) -> None:
+        super(TextEncoder, self).__init__()
+        self.model = AutoModel.from_pretrained(model_name).to(Globals.DEVICE)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    def encode(self, texts: List[str], batch_size: int = 32):
+        """Encode list of texts, with or without gradient computation."""
+        text_embs = []
+        for batch in Batcher.create_batches(texts, batch_size):
+            inps = self.tokenizer(batch, padding=True, truncation=True,
+                                  return_tensors='pt').to(Globals.DEVICE)
+            text_embs.extend(mean_pooling(self.model(**inps)[0],
+                                          inps['attention_mask']))
+        return torch.vstack(text_embs)
 
 
 class ZeroShooterZSTC():
     '''Class of text encoders that encode according to Z-STE
     (i.e. documents and labels separately)'''
-    def __init__(self, model_name: str = 'all-mpnet-base-v2') -> None:
+    def __init__(self, model_name: str) -> None:
         super(ZeroShooterZSTC, self).__init__()
-        self.encoder = SentenceTransformer(model_name).to(Globals.DEVICE)
+        # self.encoder = SentenceTransformer(model_name).to(Globals.DEVICE)
+        self.encoder = TextEncoder(model_name)
 
     def encode_labels(self, labels: List[str]) -> np.array:
         logger.debug("Encoding labels")
         self.label2id = {l: i for i, l in enumerate(labels)}
         self.id2label = {v: k for k, v in self.label2id.items()}
-        with torch.no_grad():
-            self.labels_embs = self.encoder.encode(labels, show_progress_bar=False)
+        self.labels_embs = self.encoder.encode(labels)
         return self.labels_embs
 
     def compute_labels_scores(self,
                               texts: Union[str, List[str]],
                               labels: Union[str, List[str]] = None,
                               encoding_method: str = "base",
-                              floor_to_zero: bool = True) -> np.array:
+                              floor_to_zero: bool = True) -> Tensor:
         texts, labels = self.check_inputs(texts, labels)
         # Compute sts similarity by batch.
         if encoding_method == 'base':
@@ -57,15 +75,14 @@ class ZeroShooterZSTC():
             docs_embs = self.encode_ess(texts)
         else:
             logger.error(f"Unsupported encoding method: {encoding_method}")
-        scores = cos_sim(docs_embs, self.labels_embs).numpy()  # Matrix N x M, N docs and M labels.
+        scores = cos_sim(docs_embs, self.labels_embs)  # Matrix N x M, N docs and M labels.
         if floor_to_zero:
             scores[scores < 0] = 0
         return scores
 
     def encode_base(self, docs: List[str], show_progress_bar: bool = False):
         """Naively encode the whole document."""
-        with torch.no_grad():
-            return self.encoder.encode(docs, show_progress_bar=show_progress_bar)
+        return self.encoder.encode(docs)
 
     def encode_ess(self,
                    docs: List[str],
@@ -89,8 +106,7 @@ class ZeroShooterZSTC():
         for doc in docs:
             sents = [s for s in sent_tokenize(doc) if len(s) >= min_len]
             # Embed each sentence separately.
-            with torch.no_grad():
-                sents_emb = self.encoder.encode(sents, show_progress_bar=False)
+            sents_emb = self.encoder.encode(sents, show_progress_bar=False)
             # For each sentence, compute the probability of belonging to each label, as
             # the absolute value of the cosine similarity between sent and labels.
             sents_labels_probs = abs(cos_sim(sents_emb, self.labels_embs).numpy())

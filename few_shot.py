@@ -25,13 +25,15 @@ if __name__ == "__main__":
     #     ['Sport', 'Athletics']
     # ]
 
-    train_data = WebOfScience('train', topn=1000)
-    valid_data = WebOfScience('valid', topn=1000)
-    test_data = WebOfScience('test', topn=None)
+    train_data = WebOfScience('train', topn=30)
+    valid_data = WebOfScience('valid', topn=30)
+    # test_data = WebOfScience('test', topn=10)
 
     tax_zero_shooter = TaxZeroShot(
         train_data.tax_tree,
-        f'{Paths.SAVE_DIR}/label_alphas_WebOfScience.json'
+        f'{Paths.SAVE_DIR}/label_alphas_WebOfScience.json',
+        no_grad_zstc=False,
+        no_grad_usp=True
     )
 
     # Get examples for few-shot training.
@@ -56,5 +58,5 @@ if __name__ == "__main__":
     )
     # Evaluate
     fs_trainer.evaluate(tax_zero_shooter, examples_valid)
-    fs_trainer.train(tax_zero_shooter, examples_train, examples_valid, lr=0.1,
+    fs_trainer.train(tax_zero_shooter, examples_train, examples_valid, lr=1e-2,
                      n_epochs=4)

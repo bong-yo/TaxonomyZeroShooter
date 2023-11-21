@@ -8,7 +8,6 @@ The structure of tazonomy is not taken into account yet for Z-STE.
 import argparse
 import logging
 import torch
-import src
 from src.metrics import PerformanceDisplay
 from src.dataset import WebOfScience, DBPedia, AmazonHTC
 from src.scoring_functions import PriorScoresZeroShooting
@@ -84,4 +83,3 @@ if __name__ == '__main__':
             performance = perf_displayer.compute_levels_performance()
             logger.info(performance)
             FileIO.append_text(performance, savefile)
-

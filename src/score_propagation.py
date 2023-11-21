@@ -56,7 +56,7 @@ class UpwardScorePropagation:
         _usp(prob_tree, is_root=True)
         return prob_tree
 
-    def gate_H(self, prior_scores_flat: List[float], tax_tree: Dict, no_grad: bool) -> Dict:
+    def gate_H(self, prior_scores_flat: List[float], tax_tree: Dict) -> Dict:
         '''Perform the Upward Score Propagation (USP):
         Relevance Threshold alpha acts like a GATE, i.e., score is propagated
         from children to parent ONLY IF children score is > alpha.
@@ -80,11 +80,8 @@ class UpwardScorePropagation:
                 prior_score = prior_scores_flat[self.label2id[label]]
                 children_score = _usp(children)
                 posterior_score = torch.tanh(prior_score + children_score)
-                if no_grad:
-                    with torch.no_grad():
-                        propag_coeff = self.sigmoid_gate_model(posterior_score, self.label2id[label])
-                else:
-                    propag_coeff = self.sigmoid_gate_model(posterior_score, self.label2id[label])
+                propag_coeff = self.sigmoid_gate_model(posterior_score,
+                                                       self.label2id[label])
                 upwards_propag_score += propag_coeff * posterior_score
                 root[label]['prob'] = posterior_score
             return upwards_propag_score
