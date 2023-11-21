@@ -63,10 +63,12 @@ class FewShotData:
     def compute_entropy(self, p: List[float]):
         """Compute normalized entropy i.e. entropy divided by the maximum
         entropy: - sum_i p_i ln(p_i) / ln(N) where N is the number of classes."""
+        p = torch.stack(p)
+        p[p < 0.3] = 0  # Filter out low prob. labels (helps denoise entropy).
+        p = p + 1e-8  # Avoid log(0).
         sum_p = sum(p)
-        p = torch.stack(p) + 1e-8  # Avoid log(0).
         p = p / sum_p  # Normalize prob.
-        return (- sum(p * p.log()) / torch.tensor(p.size(0)).log()).tolist()
+        return (- sum(p * p.log()) / torch.tensor(p.size(0)).log())
 
     def get_centroids_ids(self, texts: List[str], ids: List[int], n_shots: int):
         logger.debug('Computing centroids')

@@ -25,7 +25,7 @@ if __name__ == "__main__":
     #     ['Sport', 'Athletics']
     # ]
 
-    train_data = WebOfScience('train', topn=30)
+    train_data = WebOfScience('train', topn=100)
     valid_data = WebOfScience('valid', topn=30)
     # test_data = WebOfScience('test', topn=10)
 
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     # Get examples for few-shot training.
     few_shot_data = FewShotData(tax_zero_shooter)
     examples_train = few_shot_data.select_examples(
-        train_data, min_entropy=0.5, max_entropy=0.7, n_shots=10
+        train_data, min_entropy=0.7, max_entropy=0.95, n_shots=10
     )
     labels_train = set([example.labels[0] for example in examples_train])
 
