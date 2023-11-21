@@ -76,10 +76,10 @@ class FewShotData:
         ids = torch.LongTensor(ids)
         # Filter doc embeddings within a certain range of entropy.
         with torch.no_grad():
-            embs = self.zero_shooter.encoder.encoder.encode(texts)
+            embs = self.zero_shooter.encoder.encoder.encode(texts).cpu().numpy()
         # Centroids method.
         kmeans = KMeans(n_clusters=n_shots)
-        kmeans.fit(embs.cpu().numpy())
+        kmeans.fit(embs)
         centroids = np.array(kmeans.cluster_centers_)
         closest, _ = vq(centroids, embs)
         return ids[closest]
