@@ -6,27 +6,8 @@ from globals import Paths
 
 
 if __name__ == "__main__":
-
-    # tax_tree = {
-    #     'Computer Science': {'Machine Learning': {}, 'Quantum Computing': {}},
-    #     'Art': {'Renaissance': {}, 'Cubism': {}, 'Impressionism': {}},
-    #     'Sport': {'Athletics': {}, 'Football': {}, 'Tennis': {}}
-    # }
-
-    # docs = [
-    #     'OpenAI released DALL-E: an amazing neural network that leverages Transformers \
-    #         architecture and Diffusion model training to generate images starting from text',
-    #     'Usain Bolt was arguably the fastest sprinter that has ever run, and it currently\
-    #         holds the world record for both 100 meters and 200 meters'
-    # ]
-
-    # labels_supervised = [
-    #     ['Computer Science', 'Art', 'Machine Learning'],
-    #     ['Sport', 'Athletics']
-    # ]
-
-    train_data = WebOfScience('train', topn=100)
-    valid_data = WebOfScience('valid', topn=30)
+    train_data = WebOfScience('train', topn=200)
+    valid_data = WebOfScience('valid', topn=1000)
     # test_data = WebOfScience('test', topn=10)
 
     tax_zero_shooter = TaxZeroShot(

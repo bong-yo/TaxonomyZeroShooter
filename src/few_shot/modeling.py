@@ -61,32 +61,39 @@ class FewShotTrainer(nn.Module):
     def evaluate(self,
                  tzs_model: TaxZeroShot,
                  data: List[ExampleFewShot]) -> List[str]:
+        prec_seen, rec_seen, f1_seen, prec_unseen, rec_unseen, f1_unseen = \
+            FewShotEvaluator.run(tzs_model, data, self.labels_all,
+                                 self.labels_train)
+        message = "prec: %.3f, rec: %.3f, f1: %.3f"
+        logger.info(f'SEEN: {message % (prec_seen, rec_seen, f1_seen)}')
+        logger.info(f'UNSEEN: {message % (prec_unseen, rec_unseen, f1_unseen)}')
+
+
+class FewShotEvaluator:
+    @staticmethod
+    def run(tzs_model: TaxZeroShot,
+            data: List[ExampleFewShot],
+            labels_all: list[str], labels_train: list[str]) -> List[str]:
         texts = [example.text for example in data]
         targets = np.array([example.labels[0] for example in data])
         with torch.no_grad():
             posterior_scores_flat, _ = tzs_model.forward(texts)
         predictions = []
         for scores in posterior_scores_flat:
-            scores_subset = {lab: scores[lab] for lab in self.labels_all}
+            scores_subset = {lab: scores[lab] for lab in labels_all}
             # Get the label with the highest score.
             predictions.append(max(scores_subset, key=scores.get))
         predictions = np.array(predictions)
         # Compute performance separately for labels seen at training time and not.
-        ids_seen_during_training = np.array([
-            t in self.labels_train for t in targets
-        ])
+        ids_seen_during_training = np.array([t in labels_train for t in targets])
         # Labels seen during FS training.
         targs = targets[ids_seen_during_training]
         preds = predictions[ids_seen_during_training]
-        prec, rec, f1, _ = precision_recall_fscore_support(
-            targs, preds, average='macro'
-        )
-        logger.info('SEEN: prec: %.3f, rec: %.3f, f1: %.3f' % (prec, rec, f1))
+        prec_seen, rec_seen, f1_seen, _ = \
+            precision_recall_fscore_support(targs, preds, average='macro')
         # Labels not seen during FS training.
         targs = targets[~ids_seen_during_training]
         preds = predictions[~ids_seen_during_training]
-        prec, rec, f1, _ = precision_recall_fscore_support(
-            targs, preds, average='macro'
-        )
-        logger.info('UNSEEN: prec: %.3f, rec: %.3f, f1: %.3f' % (prec, rec, f1))
-        return prec, rec, f1
+        prec_unseen, rec_unseen, f1_unseen, _ = \
+            precision_recall_fscore_support(targs, preds, average='macro')
+        return prec_seen, rec_seen, f1_seen, prec_unseen, rec_unseen, f1_unseen
