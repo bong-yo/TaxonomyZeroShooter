@@ -44,7 +44,7 @@ class FewShotData:
         # Compute entropy.
         entropies = [self.compute_entropy(prbs) for prbs in docs_labels_probs]
 
-        # Get most representative and diverse 'n_shot' examples 
+        # Get most representative and diverse 'n_shot' examples
         # (with entropy in the wanted range) by selecting n_shot centroids.
         examples_ids = [
             i for i, s in enumerate(entropies) if min_entropy < s < max_entropy
@@ -77,7 +77,7 @@ class FewShotData:
         ids = torch.LongTensor(ids)
         if isinstance(texts[0], str):  # Compute docs embs.
             with torch.no_grad():
-                embs = self.zero_shooter.zstc_encoder.encoder.encode(texts).cpu().numpy()
+                embs = self.zero_shooter.zstc.encoder.encode(texts).cpu().numpy()
         elif isinstance(texts[0], Tensor):  # Use precomputed docs embs.
             embs = texts.cpu().numpy()
 

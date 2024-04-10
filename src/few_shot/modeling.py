@@ -28,19 +28,33 @@ class FewShotTrainer(nn.Module):
 
     def train(self,
               tzs_model: TaxZeroShot,
-              examples_train: List[ExampleFewShot],
-              examples_valid: List[ExampleFewShot],
-              lr: float,
-              n_epochs: int):
+              examples_train: list[ExampleFewShot],
+              examples_valid: list[ExampleFewShot],
+              lr_zstc: float,
+              lr_usp: float,
+              n_epochs: int) -> TaxZeroShot:
 
-        optimizer = SGD(tzs_model.encoder.encoder.model.parameters(), lr=lr)
+        # Define optimizer parameters with a dictionary, where only the parameters
+        # of the model that require grad are included and the get assigned the 
+        # correct lr.
+        zstc_params = [p for p in tzs_model.zstc.encoder.model.parameters()
+                       if p.requires_grad]
+        usp_params = [p for p in tzs_model.USP.sigmoid_gate_model.parameters()
+                      if p.requires_grad]
+        # Only include parameter groups that require grad.
+        params_groups = [
+            group for group in [{'params': zstc_params, 'lr': lr_zstc},
+                                {'params': usp_params, 'lr': lr_usp}]
+            if group['params']
+        ]
+        optimizer = SGD(params_groups)
 
-        for epoch in range(n_epochs):
+        for epoch in tqdm(range(n_epochs), desc='few-shot fine-tuning'):
             logger.info(f'Epoch {epoch+1}/{n_epochs}')
             docs = [example.text for example in examples_train]
             targets = [example.labels[0] for example in examples_train]
             loss_train = 0
-            for doc, true_lab in tqdm(list(zip(docs, targets))):
+            for doc, true_lab in list(zip(docs, targets)):
                 optimizer.zero_grad()
                 posterior_scores_flat, _ = tzs_model.forward([doc])
                 preds = torch.stack(
@@ -54,19 +68,23 @@ class FewShotTrainer(nn.Module):
                 optimizer.step()
                 loss_train += loss.item()
             logger.info('Loss train: %.3f' % loss_train)
+            # # Evaluate.
+            # self.evaluate(tzs_model, examples_valid)
 
-            # Evaluate.
-            self.evaluate(tzs_model, examples_valid)
+        return tzs_model
 
     def evaluate(self,
                  tzs_model: TaxZeroShot,
-                 data: List[ExampleFewShot]) -> List[str]:
+                 data: List[ExampleFewShot]) -> dict:
         prec_seen, rec_seen, f1_seen, prec_unseen, rec_unseen, f1_unseen = \
             FewShotEvaluator.run(tzs_model, data, self.labels_all,
                                  self.labels_train)
         message = "prec: %.3f, rec: %.3f, f1: %.3f"
         logger.info(f'SEEN: {message % (prec_seen, rec_seen, f1_seen)}')
         logger.info(f'UNSEEN: {message % (prec_unseen, rec_unseen, f1_unseen)}')
+        return {'p_seen': prec_seen, 'r_seen': rec_seen, 'f1_seen': f1_seen,
+                'p_unseen': prec_unseen, 'r_unseen': rec_unseen,
+                'f1_unseen': f1_unseen}
 
 
 class FewShotEvaluator:
