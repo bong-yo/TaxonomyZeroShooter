@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from torch import Tensor
 import torch.nn as nn
-from torch.optim import SGD
+from torch.optim import SGD, Adam
 from sklearn.metrics import precision_recall_fscore_support
 from src.zero_shooter import TaxZeroShot
 from src.few_shot.select_FS_examples import ExampleFewShot
@@ -33,7 +33,14 @@ class FewShotTrainer(nn.Module):
               lr: float,
               n_epochs: int):
 
-        optimizer = SGD(tzs_model.encoder.encoder.model.parameters(), lr=lr)
+        logger.info('Few-Shot training...')
+
+        trainable_params = [
+            p for p in list(tzs_model.encoder.encoder.model.parameters()) +
+            list(tzs_model.USP.sigmoid_gate_model.parameters())
+            if p.requires_grad
+        ]
+        optimizer = Adam(trainable_params, lr=lr)
 
         for epoch in range(n_epochs):
             logger.info(f'Epoch {epoch+1}/{n_epochs}')

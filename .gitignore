@@ -18,6 +18,7 @@ dist/
 
 # Files & folders
 results/*
+datasets/*
 Ground_PDFs_plots/*
 temp/*
 saves/*
@@ -25,3 +26,7 @@ labels_sim_distribution.py
 jobs/*
 prov.ipynb
 prova.py
+globals.py
+*.log
+*.pt
+*.json

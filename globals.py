@@ -54,11 +54,12 @@ class Paths:
     SRC_DIR = f"{MAIN_DIR}/src"
     RESULTS_DIR = f"{MAIN_DIR}/results"
     SAVE_DIR = f"{MAIN_DIR}/saves"
-    DATASETS_DIR = f"{dirname(MAIN_DIR)}/datasets"
+    DATASETS_DIR = f"{MAIN_DIR}/datasets"
     WOS_DIR = f'{DATASETS_DIR}/WebOfScience/Meta-data'
     DBP_DIR = f'{DATASETS_DIR}/DBPedia_Extract'
     AHTC_DIR = f'{DATASETS_DIR}/Amazon_Reviews'
     WIKI_DIR = f'{MAIN_DIR}/wiki_pages'
 
+
 class Globals:
-    DEVICE = 'cuda' if cuda.is_available() else 'cpu'
+    DEVICE = 'cuda:0' if cuda.is_available() else 'cpu'

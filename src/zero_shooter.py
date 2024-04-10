@@ -9,8 +9,8 @@ from src.utils import FileIO, flatten_tree
 
 class TaxZeroShot:
     def __init__(self, taxonomy: Dict, label_thresholds_file: str = None,
-                 no_grad_zstc: bool = True,
-                 no_grad_usp: bool = True) -> None:
+                 freeze_zstc: bool = True,
+                 freeze_usp: bool = True) -> None:
         self.encoder = ZeroShooterZSTC('sentence-transformers/all-mpnet-base-v2')
         self.data = BaseData(taxonomy)
         self.prior_scores = PriorScoresZeroShooting(
@@ -24,10 +24,10 @@ class TaxZeroShot:
         self.USP = UpwardScorePropagation(self.label2alpha, self.label2id)
 
         # Freeze parameters if no_grad.
-        if no_grad_zstc:
+        if freeze_zstc:
             for p in self.encoder.encoder.model.parameters():
                 p.requires_grad = False
-        if no_grad_usp:
+        if freeze_usp:
             for p in self.USP.sigmoid_gate_model.parameters():
                 p.requires_grad = False
 

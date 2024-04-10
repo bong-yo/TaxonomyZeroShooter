@@ -7,33 +7,15 @@ from globals import Paths
 
 if __name__ == "__main__":
 
-    # tax_tree = {
-    #     'Computer Science': {'Machine Learning': {}, 'Quantum Computing': {}},
-    #     'Art': {'Renaissance': {}, 'Cubism': {}, 'Impressionism': {}},
-    #     'Sport': {'Athletics': {}, 'Football': {}, 'Tennis': {}}
-    # }
-
-    # docs = [
-    #     'OpenAI released DALL-E: an amazing neural network that leverages Transformers \
-    #         architecture and Diffusion model training to generate images starting from text',
-    #     'Usain Bolt was arguably the fastest sprinter that has ever run, and it currently\
-    #         holds the world record for both 100 meters and 200 meters'
-    # ]
-
-    # labels_supervised = [
-    #     ['Computer Science', 'Art', 'Machine Learning'],
-    #     ['Sport', 'Athletics']
-    # ]
-
-    train_data = WebOfScience('train', topn=100)
+    train_data = WebOfScience('train', topn=200)
     valid_data = WebOfScience('valid', topn=30)
     # test_data = WebOfScience('test', topn=10)
 
     tax_zero_shooter = TaxZeroShot(
         train_data.tax_tree,
         f'{Paths.SAVE_DIR}/label_alphas_WebOfScience.json',
-        no_grad_zstc=False,
-        no_grad_usp=True
+        freeze_zstc=False,
+        freeze_usp=True
     )
 
     # Get examples for few-shot training.
@@ -58,5 +40,5 @@ if __name__ == "__main__":
     )
     # Evaluate
     fs_trainer.evaluate(tax_zero_shooter, examples_valid)
-    fs_trainer.train(tax_zero_shooter, examples_train, examples_valid, lr=1e-2,
+    fs_trainer.train(tax_zero_shooter, examples_train, examples_valid, lr=1e-4,
                      n_epochs=4)

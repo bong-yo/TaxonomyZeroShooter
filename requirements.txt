@@ -5,3 +5,5 @@ tqdm
 numpy
 openpyxl
 scipy
+scikit-learn
+matplotlib
