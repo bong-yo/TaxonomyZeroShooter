@@ -14,8 +14,8 @@ if __name__ == "__main__":
     tax_zero_shooter = TaxZeroShot(
         train_data.tax_tree,
         f'{Paths.SAVE_DIR}/label_alphas_WebOfScience.json',
-        freeze_zstc=False,
-        freeze_usp=True
+        no_grad_zstc=False,
+        no_grad_zstc=True
     )
 
     # Get examples for few-shot training.
