@@ -24,7 +24,7 @@ temp/*
 saves/*
 labels_sim_distribution.py
 jobs/*
-prov.ipynb
+prova.ipynb
 prova.py
 globals.py
 *.log

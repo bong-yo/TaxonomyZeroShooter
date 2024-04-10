@@ -5,6 +5,7 @@ from copy import copy
 from tqdm import tqdm
 import pandas as pd
 from collections import defaultdict, deque
+import torch
 from src.utils import FileIO
 from globals import Paths
 
@@ -106,7 +107,8 @@ class BaseData(TaxonomyBase):
 
 
 class WebOfScience(BaseData):
-    def __init__(self, datasplit: str, topn: int = None) -> None:
+    def __init__(self, datasplit: str, topn: int = None,
+                 embeddings_precomputed: bool = True) -> None:
         remap_level1 = {
             'CS': 'Computer Science',
             'Civil': 'Civil Engineering',
@@ -137,6 +139,12 @@ class WebOfScience(BaseData):
             [remap_level1[x.strip()] for x in data['Domain'].values],  # Labels level 1.
             [x.strip() for x in data['area'].values]  # Labels level 2.
         ]
+
+        # Load precomputed embeddings, if they have been precomputed.
+        if embeddings_precomputed:
+            self.abstracts_embs = \
+                torch.load(f'{Paths.WOS_DIR}/{datasplit}_embs.pt')[: topn]
+
         self.tax_depth = len(self.Y)
         self.n_data = len(self.abstracts)
 
