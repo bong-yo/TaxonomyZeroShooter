@@ -6,8 +6,8 @@ from globals import Paths
 
 
 if __name__ == "__main__":
-    train_data = WebOfScience('train', topn=200)
-    valid_data = WebOfScience('valid', topn=1000)
+    train_data = WebOfScience('train', topn=None, embeddings_precomputed=True)
+    valid_data = WebOfScience('valid', topn=1000, embeddings_precomputed=True)
     # test_data = WebOfScience('test', topn=10)
 
     tax_zero_shooter = TaxZeroShot(

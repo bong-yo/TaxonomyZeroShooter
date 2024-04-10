@@ -33,7 +33,7 @@ class FewShotTrainer(nn.Module):
               lr: float,
               n_epochs: int):
 
-        optimizer = SGD(tzs_model.encoder.encoder.model.parameters(), lr=lr)
+        optimizer = SGD(tzs_model.zstc_encoder.encoder.model.parameters(), lr=lr)
 
         for epoch in range(n_epochs):
             logger.info(f'Epoch {epoch+1}/{n_epochs}')

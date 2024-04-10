@@ -8,6 +8,7 @@ import logging
 import numpy as np
 from scipy.cluster.vq import vq
 import torch
+from torch import Tensor, LongTensor
 from sklearn.cluster import KMeans
 from src.dataset import WebOfScience, DBPedia, AmazonHTC
 from src.zero_shooter import TaxZeroShot
@@ -35,7 +36,7 @@ class FewShotData:
         labels_relevant = data.labels_levels[0]
         # Select zero_shot probs of the wanted 'labels'.
         with torch.no_grad():
-            docs_labels_prob_flat, _ = self.zero_shooter.forward(data.abstracts)
+            docs_labels_prob_flat, _ = self.zero_shooter.forward(data.abstracts_embs)
         docs_labels_probs = [
             [label_probs_flat[lab] for lab in labels_relevant]
             for label_probs_flat in docs_labels_prob_flat
@@ -43,14 +44,14 @@ class FewShotData:
         # Compute entropy.
         entropies = [self.compute_entropy(prbs) for prbs in docs_labels_probs]
 
-        # Select (randomly) 'n_shot' examples with entropy in the wanted range.
+        # Get most representative and diverse 'n_shot' examples 
+        # (with entropy in the wanted range) by selecting n_shot centroids.
         examples_ids = [
             i for i, s in enumerate(entropies) if min_entropy < s < max_entropy
         ]
-
-        texts = [x for i, x in enumerate(data.abstracts) if i in examples_ids]
-        centroids_ids = self.get_centroids_ids(texts, examples_ids, n_shots)
-
+        # texts = [x for i, x in enumerate(data.abstracts) if i in examples_ids]
+        embs = data.abstracts_embs[examples_ids]
+        centroids_ids = self.get_centroids_ids(embs, examples_ids, n_shots)
         res = [
             ExampleFewShot(
                 text=data.abstracts[i],
@@ -70,13 +71,16 @@ class FewShotData:
         p = p / sum_p  # Normalize prob.
         return (- sum(p * p.log()) / torch.tensor(p.size(0)).log())
 
-    def get_centroids_ids(self, texts: List[str], ids: List[int], n_shots: int):
+    def get_centroids_ids(self, texts: Union[list[str], Tensor],
+                          ids: list[int], n_shots: int) -> LongTensor:
         logger.debug('Computing centroids')
-        # ids = torch.arange(len(texts))
         ids = torch.LongTensor(ids)
-        # Filter doc embeddings within a certain range of entropy.
-        with torch.no_grad():
-            embs = self.zero_shooter.encoder.encoder.encode(texts).cpu().numpy()
+        if isinstance(texts[0], str):  # Compute docs embs.
+            with torch.no_grad():
+                embs = self.zero_shooter.zstc_encoder.encoder.encode(texts).cpu().numpy()
+        elif isinstance(texts[0], Tensor):  # Use precomputed docs embs.
+            embs = texts.cpu().numpy()
+
         # Centroids method.
         kmeans = KMeans(n_clusters=n_shots)
         kmeans.fit(embs)
