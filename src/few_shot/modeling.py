@@ -49,8 +49,8 @@ class FewShotTrainer(nn.Module):
         ]
         optimizer = SGD(params_groups)
 
-        for epoch in tqdm(range(n_epochs), desc='few-shot fine-tuning'):
-            logger.info(f'Epoch {epoch+1}/{n_epochs}')
+        logger.info('FS fine-tuning')
+        for epoch in range(n_epochs):
             docs = [example.text for example in examples_train]
             targets = [example.labels[0] for example in examples_train]
             loss_train = 0
@@ -67,7 +67,7 @@ class FewShotTrainer(nn.Module):
                 loss.backward()
                 optimizer.step()
                 loss_train += loss.item()
-            logger.info('Loss train: %.3f' % loss_train)
+            logger.info('Epoch %d/%d - Loss train: %.3f' % (epoch + 1, n_epochs, loss_train))
             # # Evaluate.
             # self.evaluate(tzs_model, examples_valid)
 

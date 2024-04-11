@@ -12,7 +12,7 @@ def fewshots_finetuning(n_shots: int, lr_zstc: float, lr_usp: float,
                         ) -> dict:
     # Only precompute validation embeddings if zst stays the same throughout the training.
     use_precomputed_valid_embs = freeze_zstc
-    train_data = WebOfScience('train', topn=200, embeddings_precomputed=True)
+    train_data = WebOfScience('train', topn=100, embeddings_precomputed=True)
     valid_data = WebOfScience('valid', topn=30,
                               embeddings_precomputed=use_precomputed_valid_embs)
 
@@ -49,28 +49,33 @@ def fewshots_finetuning(n_shots: int, lr_zstc: float, lr_usp: float,
                                         examples_valid, lr_zstc=lr_zstc,
                                         lr_usp=lr_usp, n_epochs=n_epochs)
     res = fs_trainer.evaluate(tax_zero_shooter, examples_valid)
-    return res
-
-
-if __name__ == "__main__":
-    seed_everything(111)
-
-    n_shots = 4
-    lr_zstc = 1e-4
-    lr_usp = 1e-4
-    n_epochs = 1
-    freeze_zstc = True
-    freeze_usp = False
-
-    res = fewshots_finetuning(n_shots=n_shots, lr_zstc=lr_zstc, lr_usp=lr_usp,
-                              n_epochs=n_epochs, freeze_zstc=freeze_zstc,
-                              freeze_usp=freeze_usp)
     res['n_shots'] = n_shots
     res['lr_zstc'] = lr_zstc
     res['lr_usp'] = lr_usp
     res['n_epochs'] = n_epochs
     res['freeze_zstc'] = freeze_zstc
     res['freeze_usp'] = freeze_usp
+    return res
+
+
+if __name__ == "__main__":
+    seed_everything(111)
+
+    # for n_shots in [2, 4, 8]:
+    #     for n_epochs in [1, 2, 3]:
+    n_shots = 10
+    n_epochs = 1
+    lr_zstc = 1e-4
+    lr_usp = 1e-2
+    freeze_zstc = True
+    freeze_usp = False
+    print(f'\nn_shots: {n_shots}, n_epochs: {n_epochs}')
+    print(f'freeze_zstc: {freeze_zstc}, freeze_usp: {freeze_usp}')
+    print(f'lr_zstc: {lr_zstc}, lr_usp: {lr_usp}')
+    res = fewshots_finetuning(n_shots=n_shots, lr_zstc=lr_zstc,
+                              lr_usp=lr_usp,
+                              n_epochs=n_epochs, freeze_zstc=freeze_zstc,
+                              freeze_usp=freeze_usp)
     # Append as line to pd.DataFrame if already thede otherwise create it.
     try:
         df = pd.read_csv(f'{Paths.RESULTS_DIR}/few_shot_results.csv')
