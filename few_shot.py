@@ -1,3 +1,4 @@
+import copy
 import pandas as pd
 from src.zero_shooter import TaxZeroShot
 from src.few_shot.modeling import FewShotTrainer
@@ -7,29 +8,43 @@ from src.utils import seed_everything
 from globals import Paths
 
 
-def fewshots_finetuning(n_shots: int, lr_zstc: float, lr_usp: float,
-                        n_epochs: int, freeze_zstc: bool, freeze_usp: bool
-                        ) -> dict:
-    # Only precompute validation embeddings if zst stays the same throughout the training.
-    use_precomputed_valid_embs = freeze_zstc
-    train_data = WebOfScience('train', topn=100, embeddings_precomputed=True)
-    valid_data = WebOfScience('valid', topn=30,
-                              embeddings_precomputed=use_precomputed_valid_embs)
+def save_results(res: dict, filename: str) -> None:
+    '''Append as line to pd.DataFrame if already thede otherwise create it.'''
+    try:
+        df = pd.read_csv(filename)
+        df = pd.concat([df, pd.DataFrame([res])], ignore_index=True)
+    except FileNotFoundError:
+        df = pd.DataFrame([res])
+    df.to_csv(filename, index=False)
 
+
+def load_data_and_model(n_train: int, n_valid: int, use_precomputed: bool,
+                        freeze_zstc: bool, freeze_usp: bool
+                        ) -> tuple[TaxZeroShot, WebOfScience, WebOfScience]:
+    # Get data.
+    train_data = WebOfScience('train', topn=n_train, embeddings_precomputed=True)
+    valid_data = WebOfScience('valid', topn=n_valid, embeddings_precomputed=use_precomputed)
+    # Load model for Tax Zero-Shot.
     tax_zero_shooter = TaxZeroShot(
         train_data.tax_tree,
         f'{Paths.SAVE_DIR}/label_alphas_WebOfScience.json',
         freeze_zstc=freeze_zstc,
         freeze_usp=freeze_usp
     )
+    return tax_zero_shooter, train_data, valid_data
 
+
+def select_fs_examples(n_shots: int, tax_zero_shooter: TaxZeroShot,
+                       train_data: WebOfScience,
+                       valid_data: WebOfScience,
+                       min_entropy: float = 0.7, max_entropy: float = 0.95,
+                       ) -> tuple[list[ExampleFewShot], list[ExampleFewShot]]:
     # Get examples for few-shot training.
     few_shot_data = FewShotData(tax_zero_shooter)
     examples_train = few_shot_data.select_examples(
-        train_data, min_entropy=0.7, max_entropy=0.95, n_shots=n_shots
+        train_data, min_entropy=min_entropy, max_entropy=max_entropy,
+        n_shots=n_shots
     )
-    labels_train = set([example.labels[0] for example in examples_train])
-
     # Evaluation examples.
     examples_valid = [
         ExampleFewShot(
@@ -38,9 +53,25 @@ def fewshots_finetuning(n_shots: int, lr_zstc: float, lr_usp: float,
         )
         for i in range(valid_data.n_data)
     ]
+    return examples_train, examples_valid
 
+
+def fewshots_finetuning(tax_zero_shooter: TaxZeroShot,
+                        labels_to_consider: list[str],
+                        examples_train: list[ExampleFewShot],
+                        examples_valid: list[ExampleFewShot],
+                        n_shots: int, lr_zstc: float, lr_usp: float,
+                        n_epochs: int, freeze_zstc: bool, freeze_usp: bool
+                        ) -> dict:
+    print(
+        '\n------ Run Parameters -------\n'
+        f'n_shots: {n_shots}, n_epochs: {n_epochs}\n'
+        f'lr_zstc: {lr_zstc}, lr_usp: {lr_usp}\n'
+        f'freeze_zstc: {freeze_zstc}, freeze_usp: {freeze_usp}'
+    )
+    labels_train = set([example.labels[0] for example in examples_train])
     fs_trainer = FewShotTrainer(
-        labels_all=train_data.labels_levels[0],
+        labels_all=labels_to_consider,
         labels_train=labels_train
     )
     # Evaluate
@@ -60,27 +91,28 @@ def fewshots_finetuning(n_shots: int, lr_zstc: float, lr_usp: float,
 
 if __name__ == "__main__":
     seed_everything(111)
+    FREEZE_ZTSC = True
+    FREEZE_USP = False
+    LRS_USP = [0.1, 1, 10, 40]
+    LRS_ZSTC = 0
+    EPOCHS = [1, 2, 3, 5]
+    SHOTS = [10, 40, 200]
 
-    # for n_shots in [2, 4, 8]:
-    #     for n_epochs in [1, 2, 3]:
-    n_shots = 10
-    n_epochs = 1
-    lr_zstc = 1e-4
-    lr_usp = 1e-2
-    freeze_zstc = True
-    freeze_usp = False
-    print(f'\nn_shots: {n_shots}, n_epochs: {n_epochs}')
-    print(f'freeze_zstc: {freeze_zstc}, freeze_usp: {freeze_usp}')
-    print(f'lr_zstc: {lr_zstc}, lr_usp: {lr_usp}')
-    res = fewshots_finetuning(n_shots=n_shots, lr_zstc=lr_zstc,
-                              lr_usp=lr_usp,
-                              n_epochs=n_epochs, freeze_zstc=freeze_zstc,
-                              freeze_usp=freeze_usp)
-    # Append as line to pd.DataFrame if already thede otherwise create it.
-    try:
-        df = pd.read_csv(f'{Paths.RESULTS_DIR}/few_shot_results.csv')
-        df = pd.concat([df, pd.DataFrame([res])], ignore_index=True)
-    except FileNotFoundError:
-        df = pd.DataFrame([res])
-    df.to_csv(f'{Paths.RESULTS_DIR}/few_shot_results.csv', index=False)
-    print('Done!')
+    # Load data and model.
+    tax_zero_shooter, train_data, valid_data = \
+        load_data_and_model(n_train=100, n_valid=20, freeze_zstc=FREEZE_ZTSC,
+                            freeze_usp=FREEZE_USP, use_precomputed=FREEZE_ZTSC)
+    labels_to_consider = train_data.labels_levels[0]
+    for n_shots in SHOTS:
+        examples_train, examples_valid = \
+            select_fs_examples(n_shots, tax_zero_shooter, train_data, valid_data)
+        for lr_usp in LRS_USP:
+            for n_epochs in EPOCHS:
+                model = copy.deepcopy(tax_zero_shooter)
+                res = fewshots_finetuning(
+                    model, labels_to_consider, examples_train,
+                    examples_valid, n_shots=n_shots, lr_zstc=LRS_ZSTC,
+                    lr_usp=lr_usp, n_epochs=n_epochs, freeze_zstc=FREEZE_ZTSC,
+                    freeze_usp=FREEZE_USP
+                )
+                save_results(res, f'{Paths.RESULTS_DIR}/fewshot_results.csv')
