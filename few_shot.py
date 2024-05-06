@@ -1,11 +1,14 @@
 import copy
 import pandas as pd
+import logging
 from src.zero_shooter import TaxZeroShot
 from src.few_shot.modeling import FewShotTrainer
 from src.few_shot.select_FS_examples import FewShotData, ExampleFewShot
 from src.dataset import WebOfScience
 from src.utils import seed_everything
 from globals import Paths
+
+logger = logging.getLogger('few-shot_TC')
 
 
 def save_results(res: dict, filename: str) -> None:
@@ -63,7 +66,7 @@ def fewshots_finetuning(tax_zero_shooter: TaxZeroShot,
                         n_shots: int, lr_zstc: float, lr_usp: float,
                         n_epochs: int, freeze_zstc: bool, freeze_usp: bool
                         ) -> dict:
-    print(
+    logger.info(
         '\n------ Run Parameters -------\n'
         f'n_shots: {n_shots}, n_epochs: {n_epochs}\n'
         f'lr_zstc: {lr_zstc}, lr_usp: {lr_usp}\n'
@@ -91,28 +94,29 @@ def fewshots_finetuning(tax_zero_shooter: TaxZeroShot,
 
 if __name__ == "__main__":
     seed_everything(111)
-    FREEZE_ZTSC = True
+    FREEZE_ZTSC = False
     FREEZE_USP = False
-    LRS_USP = [0.1, 1, 10, 40]
-    LRS_ZSTC = 0
+    LRS_USP = [0.05, 0.1]
+    LRS_ZSTC = [1e-4, 1e-3]
     EPOCHS = [1, 2, 3, 5]
     SHOTS = [10, 40, 200]
 
     # Load data and model.
     tax_zero_shooter, train_data, valid_data = \
-        load_data_and_model(n_train=100, n_valid=20, freeze_zstc=FREEZE_ZTSC,
+        load_data_and_model(n_train=None, n_valid=None, freeze_zstc=FREEZE_ZTSC,
                             freeze_usp=FREEZE_USP, use_precomputed=FREEZE_ZTSC)
     labels_to_consider = train_data.labels_levels[0]
     for n_shots in SHOTS:
         examples_train, examples_valid = \
             select_fs_examples(n_shots, tax_zero_shooter, train_data, valid_data)
-        for lr_usp in LRS_USP:
-            for n_epochs in EPOCHS:
-                model = copy.deepcopy(tax_zero_shooter)
-                res = fewshots_finetuning(
-                    model, labels_to_consider, examples_train,
-                    examples_valid, n_shots=n_shots, lr_zstc=LRS_ZSTC,
-                    lr_usp=lr_usp, n_epochs=n_epochs, freeze_zstc=FREEZE_ZTSC,
-                    freeze_usp=FREEZE_USP
-                )
-                save_results(res, f'{Paths.RESULTS_DIR}/fewshot_results.csv')
+        for lr_zstc in LRS_ZSTC:
+            for lr_usp in LRS_USP:
+                for n_epochs in EPOCHS:
+                    model = copy.deepcopy(tax_zero_shooter)
+                    res = fewshots_finetuning(
+                        model, labels_to_consider, examples_train,
+                        examples_valid, n_shots=n_shots, lr_zstc=lr_zstc,
+                        lr_usp=lr_usp, n_epochs=n_epochs, freeze_zstc=FREEZE_ZTSC,
+                        freeze_usp=FREEZE_USP
+                    )
+                    save_results(res, f'{Paths.RESULTS_DIR}/fewshot_results.csv')

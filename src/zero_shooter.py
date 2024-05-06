@@ -7,6 +7,7 @@ from src.dataset import BaseData
 from src.scoring_functions import PriorScoresZeroShooting
 from src.score_propagation import UpwardScorePropagation
 from src.utils import FileIO, flatten_tree
+from globals import Globals
 
 
 class TaxZeroShot(nn.Module):
@@ -39,7 +40,7 @@ class TaxZeroShot(nn.Module):
             priors_flat = self.prior_scores.compute_prior_scores(documents)
         elif isinstance(documents[0], Tensor):  # Use precomputed docs embs.
             labels_embs = self.zstc.encode_labels(self.data.labels_flat)
-            priors_flat = cos_sim(documents, labels_embs)
+            priors_flat = cos_sim(documents.to(Globals.DEVICE), labels_embs)
             priors_flat[priors_flat < 0] = 0
         res_flat, res_trees = [], []
         for prior_scores_flat in priors_flat:
