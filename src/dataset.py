@@ -1,3 +1,4 @@
+from typing import Literal
 import logging
 import re
 from typing import Dict, List, Tuple, Union
@@ -97,7 +98,9 @@ class BaseData(TaxonomyBase):
             documents = [documents]
         self.abstracts: List[str] = documents
         self.tax_tree: Dict = self.load_taxonomy_tree(taxonomy)
-        self.labels_levels, self.labels_flat = self.get_taxonomy_levels(self.tax_tree)
+        self.labels_levels, self.labels_flat = \
+            self.get_taxonomy_levels(self.tax_tree)
+        self.labels_flat = list(dict.fromkeys(self.labels_flat))  # Remove duplicates, maintaing the order.
 
     def load_taxonomy_tree(self, tree: Union[Dict, str]):
         if isinstance(tree, str):
@@ -238,3 +241,36 @@ class AmazonHTC(BaseData):
             l3 = row['Cat3'].strip()
             tree[l1][l2][l3] = {}
         FileIO.write_json(tree, self.tax_tree_file)
+
+
+class LINKSData(BaseData):
+    def __init__(self,
+                 filepaths: str,
+                 taxtype: Literal['domini applicativi', 'ambiti tecnici']):
+        if taxtype == 'domini applicativi':
+            taxonomy = f'{Paths.TBI_DIR}/data_taxonomy/tree_domini_applicativi.json'
+        elif taxtype == 'ambiti tecnici':
+            taxonomy = f'{Paths.TBI_DIR}/data_taxonomy/tree_ambiti_tecnici.json'
+        else:
+            raise ValueError(f'Unknown taxonomy type: {taxtype}')
+        # Load and process data.
+        data = pd.read_excel(filepaths, sheet_name='Abstracts_Cerise_labels(70)')
+        data.rename(columns={'Labels': 'lev0', 'Unnamed: 2': 'lev1'}, inplace=True)
+        data = data.dropna(subset=['Title', 'lev0', 'lev1'])
+        abstracts = data['Title'] + ' . ' + data['Description'] + ' . ' + data['Keywords']
+        super().__init__(taxonomy, abstracts.values)
+        # Labels.
+        self.Y = [
+            [x.strip() for x in data['lev0'].values],
+            [x.strip() for x in data['lev1'].values]
+        ]
+        self.tax_depth = len(self.Y)
+        self.n_data = len(self.abstracts)
+        logger.debug('Done opening file')
+
+    def __getitem__(self, idx):
+        return {
+            'abstract': self.documents[idx],
+            'label lev0': self.Y[0][idx],
+            'label lev1': self.Y[1][idx]
+        }

@@ -4,6 +4,7 @@ import logging
 from src.zero_shooter import TaxZeroShot
 from src.few_shot.modeling import FewShotTrainer
 from src.few_shot.select_FS_examples import FewShotData, ExampleFewShot
+from src.few_shot import visuals
 from src.dataset import WebOfScience
 from src.utils import seed_everything
 from globals import Paths
@@ -120,3 +121,9 @@ if __name__ == "__main__":
                         freeze_usp=FREEZE_USP
                     )
                     save_results(res, f'{Paths.RESULTS_DIR}/fewshot_results.csv')
+    
+    # Plot results.
+    res = pd.read_csv(f'{Paths.RESULTS_DIR}/fewshot_results.csv')
+    visuals.plot_usp_results(res)
+    visuals.plot_zstc_results(res)
+    visuals.plot_usp_plus_zstc_results(res)

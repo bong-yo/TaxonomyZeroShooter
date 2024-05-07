@@ -36,7 +36,7 @@ class TextEncoder():
         self.model = AutoModel.from_pretrained(model_name).to(Globals.DEVICE)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    def encode(self, texts: List[str], batch_size: int = 32):
+    def encode(self, texts: List[str], batch_size: int = 16):
         """Encode list of texts, with or without gradient computation."""
         text_embs = []
         for batch in Batcher.create_batches(texts, batch_size):

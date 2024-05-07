@@ -2,13 +2,17 @@
 Here we try to infer the hyper-parameters alpha and beta of USP, purely from
 the distribution on the data, without using any labelled document.
 """
+import logging
 from typing import List, Tuple, Dict
 from glob import glob
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 from scipy.stats import gumbel_r, norm, expon, halfnorm, lognorm
 from src.utils import FileIO
 from src.encoders import ZeroShooterZSTC
+
+logger = logging.getLogger('zeroshot-logger')
 
 
 def compute_labels_alpha(labels: List[str],
@@ -31,8 +35,10 @@ def compute_labels_alpha(labels: List[str],
     ------
     :label2alpha Dict[str, float]:  Dictionary of label: alpha(label)
     """
-    variance_estimator = VarianceEstimator(glob(f'{wiki_folder}/*'), encoder)
-    label2alpha = variance_estimator.estimate_lognormal(labels, thresh_perc=0.99)
+    logger.info('Computing Relevance Thresholds alphas')
+    with torch.no_grad():
+        variance_estimator = VarianceEstimator(glob(f'{wiki_folder}/*'), encoder)
+        label2alpha = variance_estimator.estimate_lognormal(labels, thresh_perc=0.99)
     return label2alpha
 
 

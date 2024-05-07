@@ -4,14 +4,17 @@ import torch.nn as nn
 from sentence_transformers.util import cos_sim
 from src.encoders import ZeroShooterZSTC
 from src.dataset import BaseData
+from src.hyper_inference import compute_labels_alpha
 from src.scoring_functions import PriorScoresZeroShooting
 from src.score_propagation import UpwardScorePropagation
 from src.utils import FileIO, flatten_tree
-from globals import Globals
+from globals import Globals, Paths
 
 
 class TaxZeroShot(nn.Module):
-    def __init__(self, taxonomy: Dict, label_thresholds_file: str = None,
+    def __init__(self, taxonomy: Dict,
+                 compute_label_thresholds: bool = False,
+                 label_thresholds_file: str = None,
                  freeze_zstc: bool = True,
                  freeze_usp: bool = True) -> None:
         super(TaxZeroShot, self).__init__()
@@ -21,10 +24,12 @@ class TaxZeroShot(nn.Module):
             self.zstc, self.data.tax_tree, self.data.labels_flat
         )
         self.label2id = self.prior_scores.label2id
-        if label_thresholds_file is not None:
-            self.label2alpha = FileIO.read_json(label_thresholds_file)
+        if compute_label_thresholds:
+            self.label2alpha = compute_labels_alpha(self.data.labels_flat,
+                                                    Paths.WIKI_DIR, self.zstc)
+            FileIO.write_json(self.label2alpha, label_thresholds_file)
         else:
-            self.label2alpha = self.prior_scores
+            self.label2alpha = FileIO.read_json(label_thresholds_file)
         self.USP = UpwardScorePropagation(self.label2alpha, self.label2id)
 
         # Freeze parameters if no_grad.

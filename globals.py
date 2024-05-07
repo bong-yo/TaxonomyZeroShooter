@@ -60,6 +60,7 @@ class Paths:
     DBP_DIR = f'{DATASETS_DIR}/DBPedia_Extract'
     AHTC_DIR = f'{DATASETS_DIR}/Amazon_Reviews'
     WIKI_DIR = f'{MAIN_DIR}/wiki_pages'
+    JOANNE_DIR = f'{TBI_DIR}/data/manual_annotations'
 
 
 class Globals:

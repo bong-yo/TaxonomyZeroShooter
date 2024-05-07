@@ -1,4 +1,5 @@
 import logging
+from tqdm import tqdm
 from typing import List
 import numpy as np
 import torch
@@ -53,7 +54,7 @@ class FewShotTrainer(nn.Module):
             docs = [example.text for example in examples_train]
             targets = [example.labels[0] for example in examples_train]
             loss_train = 0
-            for doc, true_lab in list(zip(docs, targets)):
+            for doc, true_lab in tqdm(list(zip(docs, targets))):
                 optimizer.zero_grad()
                 posterior_scores_flat, _ = tzs_model.forward([doc])
                 preds = torch.stack(
@@ -67,8 +68,8 @@ class FewShotTrainer(nn.Module):
                 optimizer.step()
                 loss_train += loss.item()
             logger.info('Epoch %d/%d - Loss train: %.3f' % (epoch + 1, n_epochs, loss_train))
-            # # Evaluate.
-            # self.evaluate(tzs_model, examples_valid)
+            # Evaluate.
+            self.evaluate(tzs_model, examples_valid)
         return tzs_model
 
     def evaluate(self,
