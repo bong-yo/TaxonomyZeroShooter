@@ -1,4 +1,5 @@
-from typing import List, Any, Dict
+from typing import List, Any, Dict, Iterable
+from copy import deepcopy
 import json
 import openpyxl
 import random
@@ -6,6 +7,24 @@ import numpy as np
 import pickle
 from collections import deque
 import torch
+
+
+def build_prior_scores_trees(simil_matrix: np.array,
+                             taxonomy: Dict,
+                             label2id: dict[str, int]) -> Iterable[Dict]:
+    def _fill_scores_dfs(root: Dict) -> None:
+        """Inplace modify a copy of taxonomy tree adding prior score for each label."""
+        nonlocal simil_matrix, doc_num
+        for label in root:
+            child = root[label]
+            lab_id = label2id[label]
+            _fill_scores_dfs(child)
+            child['prob'] = simil_matrix[doc_num][lab_id]
+
+    for doc_num in range(simil_matrix.shape[0]):
+        probs_tree = deepcopy(taxonomy)
+        _fill_scores_dfs(probs_tree)
+        yield probs_tree
 
 
 def flatten_tree(tree: Dict) -> Dict[str, float]:
@@ -29,6 +48,7 @@ def flatten_tree(tree: Dict) -> Dict[str, float]:
     flat_scores = {}
     _dfs(tree)
     return flat_scores
+
 
 def get_taxonomy_levels_top_label(tree: Dict) -> List[str]:
     """BFS of the taxonomy tree of scores relative to one document,

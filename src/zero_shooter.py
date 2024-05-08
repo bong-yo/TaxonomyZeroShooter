@@ -7,7 +7,7 @@ from src.dataset import BaseData
 from src.hyper_inference import compute_labels_alpha
 from src.scoring_functions import PriorScoresZeroShooting
 from src.score_propagation import UpwardScorePropagation
-from src.utils import FileIO, flatten_tree
+from src.utils import FileIO, flatten_tree, build_prior_scores_trees
 from globals import Globals, Paths
 
 
@@ -19,6 +19,7 @@ class TaxZeroShot(nn.Module):
                  freeze_usp: bool = True) -> None:
         super(TaxZeroShot, self).__init__()
         self.zstc = ZeroShooterZSTC('sentence-transformers/all-mpnet-base-v2')
+        self.taxonomy = taxonomy
         self.data = BaseData(taxonomy)
         self.prior_scores = PriorScoresZeroShooting(
             self.zstc, self.data.tax_tree, self.data.labels_flat
@@ -41,17 +42,28 @@ class TaxZeroShot(nn.Module):
                 p.requires_grad = False
 
     def forward(self, documents: Union[List[str], Tensor]) -> Tuple[List[Dict], List[Dict]]:
-        if isinstance(documents[0], str):  # Compute docs embs.
+        # Compute docs embs.
+        if isinstance(documents[0], str):
             priors_flat = self.prior_scores.compute_prior_scores(documents)
-        elif isinstance(documents[0], Tensor):  # Use precomputed docs embs.
+        # Use precomputed docs embs.
+        elif isinstance(documents[0], Tensor):
             labels_embs = self.zstc.encode_labels(self.data.labels_flat)
             priors_flat = cos_sim(documents.to(Globals.DEVICE), labels_embs)
             priors_flat[priors_flat < 0] = 0
+        prior_trees = build_prior_scores_trees(priors_flat, self.taxonomy, self.label2id)
+
         res_flat, res_trees = [], []
-        for prior_scores_flat in priors_flat:
-            posterior_tree = self.USP.gate_H(prior_scores_flat,
-                                             self.data.tax_tree)
+        for prior in prior_trees:
+            posterior_tree = self.USP.scaling_H(prior)
             posterior_flat = flatten_tree(posterior_tree)
             res_trees.append(posterior_tree)
             res_flat.append(posterior_flat)
         return res_flat, res_trees
+
+        # res_flat, res_trees = [], []
+        # for prior_scores_flat in priors_flat:
+        #     posterior_tree = self.USP.scaling_H(prior_scores_flat, self.data.tax_tree)
+        #     posterior_flat = flatten_tree(posterior_tree)
+        #     res_trees.append(posterior_tree)
+        #     res_flat.append(posterior_flat)
+        # return res_flat, res_trees

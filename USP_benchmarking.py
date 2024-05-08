@@ -1,5 +1,6 @@
 import logging
 import argparse
+import torch
 from src.utils import FileIO
 from src.encoders import ZeroShooterZSTC
 from src.zero_shooter import TaxZeroShot
@@ -33,13 +34,13 @@ if __name__ == "__main__":
 
     savefile = f'{Paths.RESULTS_DIR}/{args.savefile}'
     DATASETS = {'WebOfScience': WebOfScience, 'DBPedia': DBPedia, 'AmazonHTC': AmazonHTC}
-    MODEL_NAME = 'all-mpnet-base-v2'
+    MODEL_NAME = 'sentence-transformers/all-mpnet-base-v2'
     COMPUTE_ALPHAS = False
     encoder = ZeroShooterZSTC(MODEL_NAME)
 
     for name, DataSet in DATASETS.items():
         msg = f"\n\n---------------------  {name} - {MODEL_NAME} --------------------\n"
-        data = DataSet('test', topn=100)
+        data = DataSet('test', topn=10)
 
         # Compute label alphas.
         label_alphas_filename = f'{Paths.SAVE_DIR}/label_alphas_{name}.json'
@@ -49,9 +50,12 @@ if __name__ == "__main__":
             FileIO.write_json(label2alpha, label_alphas_filename)
 
         # Compute posterior scores for each doc.
-        tax_zero_shooter = TaxZeroShot(data.tax_tree, label_alphas_filename)
-        tax_zero_shooter.USP.sigmoid_gate_model.b
-        _, posterior_scores_trees = tax_zero_shooter.forward(data.abstracts, no_grad=True)
+        tax_zero_shooter = TaxZeroShot(taxonomy=data.tax_tree,
+                                       compute_label_thresholds=False,
+                                       label_thresholds_file=label_alphas_filename)
+        with torch.no_grad():
+            posterior_scores_flat, posterior_scores_trees = \
+                tax_zero_shooter.forward(data.abstracts)
 
         # Select top labels for each level (according to posterior scores).
         preds = [get_taxonomy_levels_top_label(tree) for tree in posterior_scores_trees]

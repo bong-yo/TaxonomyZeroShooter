@@ -1,6 +1,7 @@
 from typing import Dict, List
 import numpy as np
 import torch
+import torch.nn as nn
 from torch import Tensor
 from copy import deepcopy
 from src.models import SigmoidModel
@@ -11,6 +12,9 @@ class UpwardScorePropagation:
     def __init__(self, label2alpha: Dict[str, float], label2id: Dict[str, int]) -> None:
         self.label2alpha = label2alpha  # Scores below this threshold do not contibute to USP.
         self.label2id = label2id
+        self.id2label = {id: lab for lab, id in label2id.items()}
+        alphas = [self.label2alpha[self.id2label[i]] for i in range(len(self.label2alpha))]
+        self.alphas = nn.Parameter(Tensor(alphas)).to(Globals.DEVICE)
         self.sigmoid_gate_model = SigmoidModel(label2alpha, label2id).to(Globals.DEVICE)
 
     def additive_H(self, prob_tree, alpha, beta):
@@ -36,7 +40,7 @@ class UpwardScorePropagation:
         dfs(prob_tree)
         return prob_tree
 
-    def scaling_H(self, prob_tree: Dict) -> Dict:
+    def scaling_H_old(self, prob_tree: Dict) -> Dict:
         '''Perform the Upward Score Propagation (USP):
         by SCALING UP the score of the node x according to the difference of similarity
         with each children y: S(x) = S(x) * exp( min(0, sim_y - sim_x) )'''
@@ -51,6 +55,28 @@ class UpwardScorePropagation:
                     delta = max(0, child_score - score)
                     score *= np.exp(delta)
                     score = min(1, score)
+            if not is_root:
+                node['prob'] = score
+            return score
+        _usp(prob_tree, is_root=True)
+        return prob_tree
+
+    def scaling_H(self, prob_tree: Dict) -> Dict:
+        '''Perform the Upward Score Propagation (USP):
+        by SCALING UP the score of the node x according to the difference of similarity
+        with each children y: S(x) = S(x) * exp( min(0, sim_y - sim_x) )'''
+        def _usp(node, is_root: bool = False):
+            score = 0 if is_root else node.pop('prob')
+            score = abs(score)  # Make sure score is positive.
+            for label, child in node.items():
+                child_post_score = _usp(child, is_root=False)
+                alpha = self.alphas[self.label2id[label]]
+                if child_post_score >= alpha and child_post_score > score:
+                    score = child_post_score
+                else:
+                    delta = torch.max(torch.tensor(0), (child_post_score - score) / alpha)
+                    score = score * torch.exp(delta)
+                    score = torch.min(torch.tensor(1), score)
             if not is_root:
                 node['prob'] = score
             return score
