@@ -33,14 +33,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     savefile = f'{Paths.RESULTS_DIR}/{args.savefile}'
-    DATASETS = {'WebOfScience': WebOfScience, 'DBPedia': DBPedia, 'AmazonHTC': AmazonHTC}
+    DATASETS = {'AmazonHTC': AmazonHTC}  # , 'DBPedia': DBPedia, 'WebOfScience': WebOfScience}
     MODEL_NAME = 'sentence-transformers/all-mpnet-base-v2'
     COMPUTE_ALPHAS = False
     encoder = ZeroShooterZSTC(MODEL_NAME)
 
     for name, DataSet in DATASETS.items():
         msg = f"\n\n---------------------  {name} - {MODEL_NAME} --------------------\n"
-        data = DataSet('test', topn=10)
+        data = DataSet('test', topn=None, use_precomputed_embeddings=True)
 
         # Compute label alphas.
         label_alphas_filename = f'{Paths.SAVE_DIR}/label_alphas_{name}.json'
@@ -55,7 +55,7 @@ if __name__ == "__main__":
                                        label_thresholds_file=label_alphas_filename)
         with torch.no_grad():
             posterior_scores_flat, posterior_scores_trees = \
-                tax_zero_shooter.forward(data.abstracts)
+                tax_zero_shooter.forward(data.abstracts_embs, hide_prograssbar=False)
 
         # Select top labels for each level (according to posterior scores).
         preds = [get_taxonomy_levels_top_label(tree) for tree in posterior_scores_trees]

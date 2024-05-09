@@ -104,14 +104,23 @@ class BaseData(TaxonomyBase):
 
     def load_taxonomy_tree(self, tree: Union[Dict, str]):
         if isinstance(tree, str):
-            return self.load_from_file(tree)
+            tree = self.load_from_file(tree)
         elif isinstance(tree, dict):
-            return tree
+            pass
+        return self.strip_tree_labels(tree)
+
+    def strip_tree_labels(self, tree: Dict) -> Dict:
+        '''Remove leading and trailing whitespaces from labels.'''
+        # print(tree)
+        newtree = {}
+        for k, v in tree.items():
+            newtree[k.strip()] = self.strip_tree_labels(v)
+        return newtree
 
 
 class WebOfScience(BaseData):
     def __init__(self, datasplit: str, topn: int = None,
-                 embeddings_precomputed: bool = True) -> None:
+                 use_precomputed_embeddings: bool = True) -> None:
         remap_level1 = {
             'CS': 'Computer Science',
             'Civil': 'Civil Engineering',
@@ -142,18 +151,18 @@ class WebOfScience(BaseData):
             [remap_level1[x.strip()] for x in data['Domain'].values],  # Labels level 1.
             [x.strip() for x in data['area'].values]  # Labels level 2.
         ]
-
-        # Load precomputed embeddings, if they have been precomputed.
-        if embeddings_precomputed:
-            self.abstracts_embs = \
-                torch.load(f'{Paths.WOS_DIR}/{datasplit}_embs.pt')[: topn]
-
         self.tax_depth = len(self.Y)
         self.n_data = len(self.abstracts)
 
+        # Load precomputed embeddings, if they have been precomputed.
+        if use_precomputed_embeddings:
+            self.abstracts_embs = \
+                torch.load(f'{Paths.WOS_DIR}/{datasplit}_embs.pt')[: topn]
+
 
 class DBPedia(BaseData):
-    def __init__(self, datasplit: str, topn: int = None, build_tree: bool = False) -> None:
+    def __init__(self, datasplit: str, topn: int = None, build_tree: bool = False,
+                 use_precomputed_embeddings: bool = True) -> None:
         logger.debug('Loading DBPedia data')
         super(DBPedia, self).__init__({}, [])
         self.train_file = f'{Paths.DBP_DIR}/DBPEDIA_train.csv'
@@ -181,6 +190,12 @@ class DBPedia(BaseData):
         ]
         self.tax_depth = len(self.Y)
         self.n_data = len(self.abstracts)
+
+        # Load precomputed embeddings, if they have been precomputed.
+        if use_precomputed_embeddings:
+            self.abstracts_embs = \
+                torch.load(f'{Paths.DBP_DIR}/{datasplit}_embs.pt')[: topn]
+
         logger.debug('Done opening file')
 
     def build_tax_tree(self) -> None:
@@ -201,7 +216,8 @@ class DBPedia(BaseData):
 
 
 class AmazonHTC(BaseData):
-    def __init__(self, datasplit: str, topn: int = None, build_tree: bool = False) -> None:
+    def __init__(self, datasplit: str, topn: int = None, build_tree: bool = False,
+                 use_precomputed_embeddings: bool = True) -> None:
         logger.debug('Loading AmazonHTC data')
         super(AmazonHTC, self).__init__({}, [])
         self.train_file = f'{Paths.AHTC_DIR}/train_40k.csv'
@@ -228,6 +244,12 @@ class AmazonHTC(BaseData):
         self.Y = [Y1, Y2, Y3]
         self.tax_depth = len(self.Y)
         self.n_data = len(self.abstracts)
+
+        # Load precomputed embeddings, if they have been precomputed.
+        if use_precomputed_embeddings:
+            self.abstracts_embs = \
+                torch.load(f'{Paths.AHTC_DIR}/{datasplit}_embs.pt')[: topn]
+
         logger.debug('Done opening file')
 
     def build_tax_tree(self) -> None:

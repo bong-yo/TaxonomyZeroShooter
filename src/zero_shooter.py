@@ -1,4 +1,5 @@
 from typing import Dict, List, Tuple, Union
+from tqdm import tqdm
 from torch import Tensor
 import torch.nn as nn
 from sentence_transformers.util import cos_sim
@@ -41,19 +42,22 @@ class TaxZeroShot(nn.Module):
             for p in self.USP.sigmoid_gate_model.parameters():
                 p.requires_grad = False
 
-    def forward(self, documents: Union[List[str], Tensor]) -> Tuple[List[Dict], List[Dict]]:
+    def forward(self, documents: Union[List[str], Tensor],
+                hide_prograssbar: bool = True) -> Tuple[List[Dict], List[Dict]]:
         # Compute docs embs.
         if isinstance(documents[0], str):
             priors_flat = self.prior_scores.compute_prior_scores(documents)
         # Use precomputed docs embs.
         elif isinstance(documents[0], Tensor):
             labels_embs = self.zstc.encode_labels(self.data.labels_flat)
-            priors_flat = cos_sim(documents.to(Globals.DEVICE), labels_embs)
+            priors_flat = cos_sim(documents.to(Globals.DEVICE), labels_embs.to(Globals.DEVICE))
             priors_flat[priors_flat < 0] = 0
         prior_trees = build_prior_scores_trees(priors_flat, self.taxonomy, self.label2id)
 
+        n = len(documents)
         res_flat, res_trees = [], []
-        for prior in prior_trees:
+        for prior in tqdm(prior_trees, disable=hide_prograssbar, total=n,
+                          mininterval=6):
             posterior_tree = self.USP.scaling_H(prior)
             posterior_flat = flatten_tree(posterior_tree)
             res_trees.append(posterior_tree)

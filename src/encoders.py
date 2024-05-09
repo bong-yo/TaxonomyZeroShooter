@@ -36,14 +36,17 @@ class TextEncoder():
         self.model = AutoModel.from_pretrained(model_name).to(Globals.DEVICE)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    def encode(self, texts: List[str], batch_size: int = 16):
+    def encode(self, texts: List[str], batch_size: int = 32,
+               hide_proggress_bar: bool = True):
         """Encode list of texts, with or without gradient computation."""
         text_embs = []
-        for batch in Batcher.create_batches(texts, batch_size):
+        for batch in tqdm(Batcher.create_batches(texts, batch_size),
+                          disable=hide_proggress_bar):
             inps = self.tokenizer(batch, padding=True, truncation=True,
                                   return_tensors='pt').to(Globals.DEVICE)
-            text_embs.extend(mean_pooling(self.model(**inps)[0],
-                                          inps['attention_mask']))
+            embs = mean_pooling(self.model(**inps)[0],
+                                inps['attention_mask']).detach().cpu()
+            text_embs.extend(embs)
         return torch.vstack(text_embs)
 
 

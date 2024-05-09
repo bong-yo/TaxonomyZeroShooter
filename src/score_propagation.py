@@ -14,7 +14,7 @@ class UpwardScorePropagation:
         self.label2id = label2id
         self.id2label = {id: lab for lab, id in label2id.items()}
         alphas = [self.label2alpha[self.id2label[i]] for i in range(len(self.label2alpha))]
-        self.alphas = nn.Parameter(Tensor(alphas)).to(Globals.DEVICE)
+        self.alphas = nn.Parameter(Tensor(alphas)).to('cpu')
         self.sigmoid_gate_model = SigmoidModel(label2alpha, label2id).to(Globals.DEVICE)
 
     def additive_H(self, prob_tree, alpha, beta):
