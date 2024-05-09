@@ -95,10 +95,10 @@ def fewshots_finetuning(tax_zero_shooter: TaxZeroShot,
 
 if __name__ == "__main__":
     seed_everything(111)
-    FREEZE_ZTSC = False
+    FREEZE_ZTSC = True
     FREEZE_USP = False
-    LRS_USP = [0.05, 0.1]
-    LRS_ZSTC = [1e-4, 1e-3]
+    LRS_USP = [10, 1, 0.1, 0.01]
+    LRS_ZSTC = [0.0]
     EPOCHS = [1, 2, 3, 5]
     SHOTS = [10, 40, 200]
 
@@ -120,8 +120,8 @@ if __name__ == "__main__":
                         lr_usp=lr_usp, n_epochs=n_epochs, freeze_zstc=FREEZE_ZTSC,
                         freeze_usp=FREEZE_USP
                     )
-                    save_results(res, f'{Paths.RESULTS_DIR}/fewshot_results.csv')
-    
+                    save_results(res, f'{Paths.RESULTS_DIR}/fewshot_results_new.csv')
+
     # Plot results.
     res = pd.read_csv(f'{Paths.RESULTS_DIR}/fewshot_results.csv')
     visuals.plot_usp_results(res)

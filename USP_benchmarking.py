@@ -33,7 +33,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     savefile = f'{Paths.RESULTS_DIR}/{args.savefile}'
-    DATASETS = {'AmazonHTC': AmazonHTC}  # , 'DBPedia': DBPedia, 'WebOfScience': WebOfScience}
+    DATASETS = {'WebOfScience': WebOfScience, 'AmazonHTC': AmazonHTC, 'DBPedia': DBPedia}
     MODEL_NAME = 'sentence-transformers/all-mpnet-base-v2'
     COMPUTE_ALPHAS = False
     encoder = ZeroShooterZSTC(MODEL_NAME)

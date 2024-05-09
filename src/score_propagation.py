@@ -14,7 +14,7 @@ class UpwardScorePropagation:
         self.label2id = label2id
         self.id2label = {id: lab for lab, id in label2id.items()}
         alphas = [self.label2alpha[self.id2label[i]] for i in range(len(self.label2alpha))]
-        self.alphas = nn.Parameter(Tensor(alphas)).to('cpu')
+        self.alphas = nn.Parameter(Tensor(alphas)).to(Globals.DEVICE)
         self.sigmoid_gate_model = SigmoidModel(label2alpha, label2id).to(Globals.DEVICE)
 
     def additive_H(self, prob_tree, alpha, beta):
@@ -63,8 +63,9 @@ class UpwardScorePropagation:
 
     def scaling_H(self, prob_tree: Dict) -> Dict:
         '''Perform the Upward Score Propagation (USP):
-        by SCALING UP the score of the node x according to the difference of similarity
-        with each children y: S(x) = S(x) * exp( min(0, sim_y - sim_x) )'''
+        by SCALING UP IN A DIFFERENTIABLE WAY, the score of the node
+        x according to the difference of similarity with each children
+        y: S(x) = S(x) * exp( min(0, sim_y - sim_x) )'''
         def _usp(node, is_root: bool = False):
             score = 0 if is_root else node.pop('prob')
             score = abs(score)  # Make sure score is positive.

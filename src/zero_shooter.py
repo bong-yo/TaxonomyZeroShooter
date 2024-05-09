@@ -39,8 +39,7 @@ class TaxZeroShot(nn.Module):
             for p in self.zstc.encoder.model.parameters():
                 p.requires_grad = False
         if freeze_usp:
-            for p in self.USP.sigmoid_gate_model.parameters():
-                p.requires_grad = False
+            self.USP.alphas.requires_grad = False
 
     def forward(self, documents: Union[List[str], Tensor],
                 hide_prograssbar: bool = True) -> Tuple[List[Dict], List[Dict]]:
@@ -52,22 +51,14 @@ class TaxZeroShot(nn.Module):
             labels_embs = self.zstc.encode_labels(self.data.labels_flat)
             priors_flat = cos_sim(documents.to(Globals.DEVICE), labels_embs.to(Globals.DEVICE))
             priors_flat[priors_flat < 0] = 0
+        # Distrib. labels priors on the tax tree.
         prior_trees = build_prior_scores_trees(priors_flat, self.taxonomy, self.label2id)
-
-        n = len(documents)
+        # Compute posteriors with USP mechanism.
         res_flat, res_trees = [], []
-        for prior in tqdm(prior_trees, disable=hide_prograssbar, total=n,
-                          mininterval=6):
+        for prior in tqdm(prior_trees, disable=hide_prograssbar,
+                          total=len(documents), mininterval=4):
             posterior_tree = self.USP.scaling_H(prior)
             posterior_flat = flatten_tree(posterior_tree)
             res_trees.append(posterior_tree)
             res_flat.append(posterior_flat)
         return res_flat, res_trees
-
-        # res_flat, res_trees = [], []
-        # for prior_scores_flat in priors_flat:
-        #     posterior_tree = self.USP.scaling_H(prior_scores_flat, self.data.tax_tree)
-        #     posterior_flat = flatten_tree(posterior_tree)
-        #     res_trees.append(posterior_tree)
-        #     res_flat.append(posterior_flat)
-        # return res_flat, res_trees

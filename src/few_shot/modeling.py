@@ -89,10 +89,18 @@ class FewShotTrainer(nn.Module):
 class FewShotEvaluator:
     @staticmethod
     def run(tzs_model: TaxZeroShot,
-            data: List[ExampleFewShot],
+            eval_data: List[ExampleFewShot],
             labels_all: list[str], labels_train: list[str]) -> List[str]:
-        texts = [example.text for example in data]
-        targets = np.array([example.labels[0] for example in data])
+        '''
+        Evaluate on seen and unseen relevant labels.
+        :param labels_all list[str]: list of all labels we want to be RELEVANT
+                                     for consideration, e.g. usually only 
+                                     the ones affected by USP.
+        :param labels_train list[str]: relevant labels that have been seen
+                                       during FewShot training.
+        '''
+        texts = [example.text for example in eval_data]
+        targets = np.array([example.labels[0] for example in eval_data])
         with torch.no_grad():
             posterior_scores_flat, _ = tzs_model.forward(texts)
         predictions = []
