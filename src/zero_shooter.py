@@ -31,7 +31,10 @@ class TaxZeroShot(nn.Module):
                                                     Paths.WIKI_DIR, self.zstc)
             FileIO.write_json(self.label2alpha, label_thresholds_file)
         else:
-            self.label2alpha = FileIO.read_json(label_thresholds_file)
+            self.label2alpha = {
+                k.strip(): v
+                for k, v in FileIO.read_json(label_thresholds_file).items()
+            }
         self.USP = UpwardScorePropagation(self.label2alpha, self.label2id)
 
         # Freeze parameters if no_grad.

@@ -2,15 +2,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-res = pd.read_csv('results/fewshot_results.csv')
-res
-
 
 def plot_results(res: pd.DataFrame, title: str):
     # Plot f1_seen and f1_unseen vs n_epochs. 
     # Add dot for each y value to see the actual values.
-    import matplotlib.pyplot as plt
-    import seaborn as sns
     sns.set(style="whitegrid")
     plt.figure(figsize=(10, 6))
     sns.scatterplot(x='n_epochs', y='f1_seen', data=res)
@@ -28,8 +23,6 @@ def plot_results_nshots(res: pd.DataFrame, title: str, savename: str):
     # Plot f1_seen and f1_unseen for each n_shot vs n_epochs. 
     # Add dot for each y value to see the actual values.
     # Plot a line for each n_shots value.
-    import matplotlib.pyplot as plt
-    import seaborn as sns
     sns.set(style="whitegrid")
     plt.figure(figsize=(10, 6))
     for n_shots in res['n_shots'].unique():

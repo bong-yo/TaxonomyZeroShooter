@@ -4,6 +4,7 @@ pandas
 tqdm
 numpy
 openpyxl
+seaborn
 scipy
 scikit-learn
 matplotlib

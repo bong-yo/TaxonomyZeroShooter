@@ -68,8 +68,8 @@ class FewShotTrainer(nn.Module):
                 optimizer.step()
                 loss_train += loss.item()
             logger.info('Epoch %d/%d - Loss train: %.3f' % (epoch + 1, n_epochs, loss_train))
-            # Evaluate.
-            self.evaluate(tzs_model, examples_valid)
+            # # Evaluate.
+            # self.evaluate(tzs_model, examples_valid)
         return tzs_model
 
     def evaluate(self,

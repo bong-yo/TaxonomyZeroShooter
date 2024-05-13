@@ -26,12 +26,13 @@ def load_data_and_model(n_train: int, n_valid: int, use_precomputed: bool,
                         freeze_zstc: bool, freeze_usp: bool
                         ) -> tuple[TaxZeroShot, WebOfScience, WebOfScience]:
     # Get data.
-    train_data = WebOfScience('train', topn=n_train, embeddings_precomputed=True)
-    valid_data = WebOfScience('valid', topn=n_valid, embeddings_precomputed=use_precomputed)
+    train_data = WebOfScience('train', topn=n_train, use_precomputed_embeddings=True)
+    valid_data = WebOfScience('valid', topn=n_valid, use_precomputed_embeddings=use_precomputed)
     # Load model for Tax Zero-Shot.
     tax_zero_shooter = TaxZeroShot(
-        train_data.tax_tree,
-        f'{Paths.SAVE_DIR}/label_alphas_WebOfScience.json',
+        taxonomy=train_data.tax_tree,
+        compute_label_thresholds=False,
+        label_thresholds_file=f'{Paths.SAVE_DIR}/label_alphas_WebOfScience.json',
         freeze_zstc=freeze_zstc,
         freeze_usp=freeze_usp
     )
@@ -120,10 +121,12 @@ if __name__ == "__main__":
                         lr_usp=lr_usp, n_epochs=n_epochs, freeze_zstc=FREEZE_ZTSC,
                         freeze_usp=FREEZE_USP
                     )
+                    logger.info(res)
+                    logger.info(f'{Paths.RESULTS_DIR}/fewshot_results_new.csv')
                     save_results(res, f'{Paths.RESULTS_DIR}/fewshot_results_new.csv')
 
     # Plot results.
-    res = pd.read_csv(f'{Paths.RESULTS_DIR}/fewshot_results.csv')
+    res = pd.read_csv(f'{Paths.RESULTS_DIR}/fewshot_results_new.csv')
     visuals.plot_usp_results(res)
     visuals.plot_zstc_results(res)
     visuals.plot_usp_plus_zstc_results(res)
