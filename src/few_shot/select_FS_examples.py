@@ -42,7 +42,10 @@ class FewShotData:
             for label_probs_flat in docs_labels_prob_flat
         ]
         # Compute entropy.
-        entropies = [self.compute_entropy(prbs) for prbs in docs_labels_probs]
+        entropies = [
+            self.compute_entropy(prbs, threshold=0.2)
+            for prbs in docs_labels_probs
+        ]
 
         # Get most representative and diverse 'n_shot' examples
         # (with entropy in the wanted range) by selecting n_shot centroids.
@@ -61,11 +64,11 @@ class FewShotData:
         ]
         return res
 
-    def compute_entropy(self, p: List[float]):
+    def compute_entropy(self, p: List[float], threshold: float = 0.2) -> Tensor:
         """Compute normalized entropy i.e. entropy divided by the maximum
         entropy: - sum_i p_i ln(p_i) / ln(N) where N is the number of classes."""
         p = torch.stack(p)
-        p[p < 0.3] = 0  # Filter out low prob. labels (helps denoise entropy).
+        p[p < threshold] = 0  # Filter out low prob. labels (helps denoise entropy).
         p = p + 1e-8  # Avoid log(0).
         sum_p = sum(p)
         p = p / sum_p  # Normalize prob.

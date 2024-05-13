@@ -39,8 +39,7 @@ class FewShotTrainer(nn.Module):
         # correct lr.
         zstc_params = [p for p in tzs_model.zstc.encoder.model.parameters()
                        if p.requires_grad]
-        usp_params = [p for p in tzs_model.USP.sigmoid_gate_model.parameters()
-                      if p.requires_grad]
+        usp_params = [tzs_model.USP.alphas] if tzs_model.USP.alphas.requires_grad else []
         # Only include parameter groups that require grad.
         params_groups = [
             group for group in [{'params': zstc_params, 'lr': lr_zstc},

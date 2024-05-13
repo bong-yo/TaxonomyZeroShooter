@@ -42,7 +42,7 @@ def load_data_and_model(n_train: int, n_valid: int, use_precomputed: bool,
 def select_fs_examples(n_shots: int, tax_zero_shooter: TaxZeroShot,
                        train_data: WebOfScience,
                        valid_data: WebOfScience,
-                       min_entropy: float = 0.7, max_entropy: float = 0.95,
+                       min_entropy: float = 0.6, max_entropy: float = 0.95,
                        ) -> tuple[list[ExampleFewShot], list[ExampleFewShot]]:
     # Get examples for few-shot training.
     few_shot_data = FewShotData(tax_zero_shooter)
@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
     # Load data and model.
     tax_zero_shooter, train_data, valid_data = \
-        load_data_and_model(n_train=None, n_valid=None, freeze_zstc=FREEZE_ZTSC,
+        load_data_and_model(n_train=1000, n_valid=100, freeze_zstc=FREEZE_ZTSC,
                             freeze_usp=FREEZE_USP, use_precomputed=FREEZE_ZTSC)
     labels_to_consider = train_data.labels_levels[0]
     for n_shots in SHOTS:
