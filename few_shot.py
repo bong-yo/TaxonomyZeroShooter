@@ -27,7 +27,7 @@ def load_data_and_model(n_train: int, n_valid: int, use_precomputed: bool,
                         ) -> tuple[TaxZeroShot, WebOfScience, WebOfScience]:
     # Get data.
     train_data = WebOfScience('train', topn=n_train, use_precomputed_embeddings=True)
-    valid_data = WebOfScience('valid', topn=n_valid, use_precomputed_embeddings=use_precomputed)
+    valid_data = WebOfScience('test', topn=n_valid, use_precomputed_embeddings=use_precomputed)
     # Load model for Tax Zero-Shot.
     tax_zero_shooter = TaxZeroShot(
         taxonomy=train_data.tax_tree,
@@ -67,7 +67,7 @@ def fewshots_finetuning(tax_zero_shooter: TaxZeroShot,
                         examples_valid: list[ExampleFewShot],
                         n_shots: int, lr_zstc: float, lr_usp: float,
                         n_epochs: int, freeze_zstc: bool, freeze_usp: bool
-                        ) -> dict:
+                        ) -> tuple[dict, TaxZeroShot]:
     logger.info(
         '\n------ Run Parameters -------\n'
         f'n_shots: {n_shots}, n_epochs: {n_epochs}\n'
@@ -91,7 +91,7 @@ def fewshots_finetuning(tax_zero_shooter: TaxZeroShot,
     res['n_epochs'] = n_epochs
     res['freeze_zstc'] = freeze_zstc
     res['freeze_usp'] = freeze_usp
-    return res
+    return res, tax_zero_shooter
 
 
 if __name__ == "__main__":

@@ -89,27 +89,27 @@ class FewShotEvaluator:
     @staticmethod
     def run(tzs_model: TaxZeroShot,
             eval_data: List[ExampleFewShot],
-            labels_all: list[str], labels_train: list[str]) -> List[str]:
+            labels_to_consider: list[str], labels_train: list[str]) -> List[str]:
         '''
         Evaluate on seen and unseen relevant labels.
         :param labels_all list[str]: list of all labels we want to be RELEVANT
                                      for consideration, e.g. usually only 
                                      the ones affected by USP.
-        :param labels_train list[str]: relevant labels that have been seen
+        :param labels_to_consider list[str]: relevant labels that have been seen
                                        during FewShot training.
         '''
         texts = [example.text for example in eval_data]
         targets = np.array([example.labels[0] for example in eval_data])
         with torch.no_grad():
             posterior_scores_flat, _ = tzs_model.forward(texts)
-        predictions = []
-        for scores in posterior_scores_flat:
-            scores_subset = {lab: scores[lab] for lab in labels_all}
-            # Get the label with the highest score.
-            predictions.append(max(scores_subset, key=scores.get))
-        predictions = np.array(predictions)
+        # Get highest score out of the labels to consider.
+        predictions = np.array([
+            max({k: v.item() for k, v in scores.items() 
+                 if k in labels_to_consider}, key=scores.get)
+            for scores in posterior_scores_flat
+        ])
         # Compute performance separately for labels seen at training time and not.
-        ids_seen_during_training = np.array([t in labels_train for t in targets])
+        ids_seen_during_training = np.array([t in set(labels_train) for t in targets])
         # Labels seen during FS training.
         targs = targets[ids_seen_during_training]
         preds = predictions[ids_seen_during_training]
