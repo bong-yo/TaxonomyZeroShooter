@@ -19,6 +19,9 @@ top_scores, usp_scores = ZeroShootTaxonomyMapper.run(
     'path/to/stored/alpha_thresholds')
 results = list(zip(texts, usp_scores, top_scores))
 ```
+* Set `compute_alpha_thresholds` to `True` during the initial run. This allows the model to gather and compute statistics on the taxonomy labels. For all subsequent runs with the same taxonomy, set this parameter to `False`, as the statistics will already have been computed.
+* `'path/to/stored/alpha_thresholds'` refers to the file path where the computed label statistics are saved. During later runs, the model will load the statistics from this location, eliminating the need for recomputation.
+
 For each input text, `results` contains:
  * text
  * custom `taxonomy` tree with posterior USP scores for each label
